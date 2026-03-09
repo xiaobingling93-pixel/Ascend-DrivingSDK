@@ -9,12 +9,12 @@ mx_driving.radius(Tensor x,Tensor y,Tensor ptr_x, Tensor ptr_y,
 
 ## 功能描述
 
-给定两组点的二维坐标X和Y，对于Y当中每一个点y，求X当中所有与y在同一个batch内，且距离在半径r之内的点的索引。
+给定两组点的Ndim维坐标X和Y，对于Y当中每一个点y，求X当中所有与y在同一个batch内，且距离在半径r之内的点的索引。
 
 ## 参数说明
 
-- `X (Tensor)`：第一组点的二维坐标，数据类型为`float32`，shape为`[numpoints_x, Ndim]`。
-- `Y (Tensor)`：第二组点的二维坐标，数据类型为`float32`，shape为`[numpoints_y, Ndim]`。
+- `X (Tensor)`：第一组点的Ndim维坐标，数据类型为`float32`，shape为`[numpoints_x, Ndim]`。
+- `Y (Tensor)`：第二组点的Ndim维坐标，数据类型为`float32`，shape为`[numpoints_y, Ndim]`。
 - `ptr_x (Tensor)`：第一组点的batch切分地址，数据类型为`int`，shape为`[batch_size + 1]`。ptr_x[0]的值为0，之后的数严格递增，ptr_x[batch_size]的值为numpoints_x。X[ptr_x[0]: ptr_x[1]]属于第1个batch，X[ptr_x[1]: ptr_x[2]]属于第2个batch，之后点的切分以此类推。
 - `ptr_y (Tensor)`：第二组点的batch切分地址，数据类型为`int`，shape为`[batch_size + 1]`。ptr_y[0]的值为0，之后的数严格递增，ptr_y[batch_size]的值为numpoints_y。Y[ptr_y[0]: ptr_y[1]]属于第1个batch，Y[ptr_y[1]: ptr_y[2]]属于第2个batch，之后点的切分以此类推。
 - `r (float)`：半径，数据类型为`float`。
