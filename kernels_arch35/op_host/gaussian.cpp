@@ -207,7 +207,7 @@ public:
         this->SetInferShape(ge::InferShapeForGaussian).SetInferDataType(ge::InferDataTypeForGaussian);
 
         this->AICore().SetTiling(optiling::TilingFuncForGaussian);
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 OP_ADD(Gaussian);

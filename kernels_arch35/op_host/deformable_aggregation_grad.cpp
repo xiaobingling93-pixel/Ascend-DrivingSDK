@@ -211,7 +211,7 @@ public:
             .SetInferDataType(ge::InferDataTypeForDeformableAggregationGrad);
 
         this->AICore().SetTiling(optiling::TilingForDeformableAggregationGrad);
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 

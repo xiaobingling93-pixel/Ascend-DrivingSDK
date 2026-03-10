@@ -127,7 +127,7 @@ public:
         this->SetInferShape(ge::InferShapeForDrawGaussianToHeatmap).SetInferDataType(ge::InferDataTypeForDrawGaussianToHeatmap);
 
         this->AICore().SetTiling(optiling::TilingFuncForDrawGaussianToHeatmap);
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 OP_ADD(DrawGaussianToHeatmap);

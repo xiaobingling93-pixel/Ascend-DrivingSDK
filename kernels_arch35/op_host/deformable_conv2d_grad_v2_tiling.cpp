@@ -338,7 +338,7 @@ public:
         this->SetInferShape(ge::InferShape4DeformableConv2dGradV2)
             .SetInferDataType(ge::InferDataType4DeformableConv2dGradV2);
         this->AICore().SetTiling(optiling::TilingForDeformableConv2dGradV2);
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 

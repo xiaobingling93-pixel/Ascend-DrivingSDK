@@ -185,7 +185,7 @@ namespace ops {
                 .SetInferDataType(ge::InferDataTypeForSigmoidFocalLossGrad);
 
             this->AICore().SetTiling(optiling::TilingForSigmoidFocalLossGrad);
-            this->AICore().AddConfig("ascend910_95");
+            this->AICore().AddConfig("ascend950");
         }
     };
 

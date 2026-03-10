@@ -27,7 +27,7 @@
                 },
                 "ASCEND_COMPUTE_UNIT_ARCH35": {
                     "type": "STRING",
-                    "value": "ascend910_95"
+                    "value": "ascend950"
                 },
                 "ENABLE_TEST": {
                     "type": "BOOL",

@@ -181,7 +181,7 @@ public:
         this->SetInferShape(ge::InferShapeForMultiScaleDeformableAttnGrad)
             .SetInferDataType(ge::InferDataTypeForMultiScaleDeformableAttnGrad);
         this->AICore().SetTiling(optiling::TilingFuncForMultiScaleDeformableAttnGrad);
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 
