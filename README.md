@@ -34,7 +34,8 @@ DrivingSDK
 │  ├── dataset                  # 负载均衡特性
 │  └── ...   
 ├── model_examples              # 自动驾驶模型示例
-│  └── BEVFormer                # BEVFormer模型示例
+│  ├── BEVFormer                # BEVFormer模型示例
+│  └── ...  
 ├── ci                          # ci脚本
 ├── cmake                       # cmake脚本
 ├── CMakeLists.txt              # cmake配置文件
