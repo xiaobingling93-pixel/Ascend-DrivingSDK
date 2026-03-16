@@ -134,7 +134,7 @@ Driving SDK仓编译依赖以下组件：
     该模式适用于生产环境。本文以Python 3.8为例进行演示。
 
     ```shell
-    bash ci/build --python=3.8
+    bash ci/build.sh --python=3.8
     或者
     python3.8 setup.py bdist_wheel
     # 请在仓库根目录下执行编译命令。
