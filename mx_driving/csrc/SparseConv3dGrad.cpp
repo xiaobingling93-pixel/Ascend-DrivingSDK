@@ -87,6 +87,8 @@ std::tuple<at::Tensor, at::Tensor> npu_sparse_conv3d_grad_v2(const at::Tensor& f
 
     int64_t kernelIC = weight_size[3];
     int64_t kernelOC = weight_size[4];
+    int64_t start_offset = indices_offset[0].item<int64_t>();
+    int64_t end_offset = indices_offset[-1].item<int64_t>();
 
     c10::SmallVector<int64_t, SIZE> feature_grad_size = {feature_size[0], kernelIC};
     auto dtype = feature.dtype();
@@ -98,7 +100,7 @@ std::tuple<at::Tensor, at::Tensor> npu_sparse_conv3d_grad_v2(const at::Tensor& f
         at::Tensor feature_grad_fp32 = at::zeros(feature_grad_size, feature.options().dtype(at::kFloat));
         at::Tensor weight_grad_fp32 = at::zeros(weight_size, feature.options().dtype(at::kFloat));
         EXEC_NPU_CMD(aclnnSparseConv3dGrad, feature_fp32, weight_fp32, grad_fp32, former_sorted_indices, indices_offset,
-            feature_grad_fp32, weight_grad_fp32);
+            start_offset, end_offset, feature_grad_fp32, weight_grad_fp32);
 
         at::Tensor feature_grad = feature_grad_fp32.to(at::kHalf);
         at::Tensor weight_grad = weight_grad_fp32.to(at::kHalf);
@@ -108,8 +110,8 @@ std::tuple<at::Tensor, at::Tensor> npu_sparse_conv3d_grad_v2(const at::Tensor& f
         at::Tensor feature_grad = at::zeros(feature_grad_size, feature.options());
         at::Tensor weight_grad = at::zeros(weight_size, feature.options());
 
-        EXEC_NPU_CMD(aclnnSparseConv3dGrad, feature, weight, grad, former_sorted_indices, indices_offset, feature_grad,
-            weight_grad);
+        EXEC_NPU_CMD(aclnnSparseConv3dGrad, feature, weight, grad, former_sorted_indices, indices_offset, start_offset,
+            end_offset, feature_grad, weight_grad);
 
         return std::tie(feature_grad, weight_grad);
     }

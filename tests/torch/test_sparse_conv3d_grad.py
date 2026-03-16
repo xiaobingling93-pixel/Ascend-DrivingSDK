@@ -92,7 +92,7 @@ class TestSparseConv3dGrad(TestCase):
         return sorted_idx_to_former_indices.int(), unique_indices_offset.int()
 
     @golden_data_cache(__file__)
-    def sparse_conv3d_grad_cpu(self, sorted_indices, indices_offset, features, weight, benchmark="single_benchmark"):
+    def sparse_conv3d_grad_cpu(self, sorted_indices, indices_offset, features, weight, grad=None, benchmark="single_benchmark"):
         ori_dtype = features.dtype
         if ori_dtype == torch.float16:
             features = features.float().cpu()
@@ -124,7 +124,10 @@ class TestSparseConv3dGrad(TestCase):
         )
         img2col_mat[arange_idx, k_pos] = features[input_idx]
 
-        grad = torch.ones((out_length, out_channels), device=features.device, dtype=features.dtype)
+        if grad is None:
+            grad = torch.ones((out_length, out_channels), device=features.device, dtype=features.dtype)
+        else:
+            grad = grad.to(features.dtype)
         # (out_num, k*k*k*cIn).T @ (out_num, cOut) = (k*k*k*cIn, cOut)
         weight_grad = img2col_mat.reshape(out_length, -1).T @ grad
         weight_grad = weight_grad.reshape(k0, k1, k2, in_channels, out_channels)
@@ -162,13 +165,13 @@ class TestSparseConv3dGrad(TestCase):
         indices = np.concatenate(indices, axis=0)
         return torch.from_numpy(indices).int()
 
-    def get_golden_output(self, sorted_indices, indices_offset, features, weight, benchmark="single_benchmark"):
+    def get_golden_output(self, sorted_indices, indices_offset, features, weight, grad=None, benchmark="single_benchmark"):
         feature_grad, weight_grad = self.sparse_conv3d_grad_cpu(
-            sorted_indices, indices_offset, features, weight, benchmark="single_benchmark"
+            sorted_indices, indices_offset, features, weight, grad, benchmark="single_benchmark"
         )
         return feature_grad, weight_grad
 
-    def get_npu_output(self, sorted_indices, indices_offset, features, weight):
+    def get_npu_output(self, sorted_indices, indices_offset, features, weight, grad=None):
         import mx_driving._C
 
         sorted_indices_npu = sorted_indices.npu()
@@ -176,9 +179,10 @@ class TestSparseConv3dGrad(TestCase):
         features_npu = features.npu()
         weight_npu = weight.npu()
 
-        dout = torch.ones(len(indices_offset) - 1, weight_npu.shape[-1], dtype=features.dtype).npu()
+        if grad is None:
+            grad = torch.ones(len(indices_offset) - 1, weight_npu.shape[-1], dtype=features.dtype).npu()
         feature_grad, weight_grad = mx_driving._C.npu_sparse_conv3d_grad_v2(
-            sorted_indices_npu, indices_offset_npu, features_npu, weight_npu, dout
+            sorted_indices_npu, indices_offset_npu, features_npu, weight_npu, grad
         )
         return feature_grad, weight_grad
 
@@ -192,10 +196,11 @@ class TestSparseConv3dGrad(TestCase):
         sorted_indices, indices_offset = self.cal_sparse_conv3d_indices(
             indices, spatial_shape, kernel_size, stride, padding
         )
-
-        feature_grad_npu, weight_grad_npu = self.get_npu_output(sorted_indices, indices_offset, features, weight)
+        
+        grad = torch.rand(len(indices_offset) - 1, weight.shape[-1], dtype=features.dtype) * 2 - 1
+        feature_grad_npu, weight_grad_npu = self.get_npu_output(sorted_indices, indices_offset, features, weight, grad=grad.npu())
         feature_grad_golden, weight_grad_golden = self.get_golden_output(
-            sorted_indices, indices_offset, features, weight, benchmark="single_benchmark"
+            sorted_indices, indices_offset, features, weight, grad=grad, benchmark="single_benchmark"
         )
 
         feature_grad_npu = feature_grad_npu.detach().cpu()
