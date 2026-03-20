@@ -246,8 +246,8 @@ bash test/train_performance_8p.sh
 
 ```shell
 # 'XX.XX.XX.XX'为主节点的IP地址；端口号可以换成未被占用的可用端口
-bash test/train_multi_server.sh 8 2 0 ‘xx.xx.xx.xx’ '3389' #主节点
-bash test/train_multi_server.sh 8 2 1 ‘xx.xx.xx.xx’ '3389' #副节点
+bash test/train_multi_server.sh 8 2 0 'XX.XX.XX.XX' '3389' #主节点
+bash test/train_multi_server.sh 8 2 1 'XX.XX.XX.XX' '3389' #副节点
 ```
 
 ## 训练结果

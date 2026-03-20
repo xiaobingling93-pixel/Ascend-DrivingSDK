@@ -14,7 +14,7 @@ export COMBINED_ENABLE=1
 export DYNAMIC_OP="ADD#MUL"
 #HCCL白名单开关,1-关闭/0-开启
 export HCCL_WHITELIST_DISABLE=1
-#export HCCL_IF_IP=$(hostname -I |awk '{print $1}')
+export HCCL_IF_IP=$(hostname -I |awk '{print $1}')
 #开启绑核
 export CPU_AFFINITY_CONF=1
 
@@ -31,24 +31,37 @@ NNODES=$2
 NODE_RANK=$3
 MASTER_ADDR=$4
 PORT=$5
-echo "number of gpus: "${gpu_num}
 
 config=projects/configs/sparse4dv3_temporal_r50_1x8_bs6_256x704.py
 work_dir=work_dirs/sparse4dv3_temporal_r50_1x8_bs6_256x704
 
-#使用断点
-sed -i.bak '
-/^[[:space:]]*main()[[:space:]]*$/ {
-    i\
-    from mx_driving.patcher.patcher import PatcherBuilder, Patch
-    i\
-    pb = PatcherBuilder().brake_at(1000)
-    i\
-    with pb.build():
-    a\
-        main()
-    d
-}' ./tools/train.py
+export SPARSE4D_PERFORMANCE_FLAG=1
+
+# 备份config文件
+cp ${config} ${config}.bak
+
+batch_size=12
+
+sum_gpu_num=${gpu_num}*${NNODES}
+global_batch_size=$((sum_gpu_num * batch_size))
+sed -i "s/total_batch_size = 48/total_batch_size = ${global_batch_size}/" "$config"
+sed -i "s/num_gpus = 8/num_gpus = ${sum_gpu_num}/" "$config"
+
+# 定义复原config文件的callback
+restore_config() { 
+    if [ -f ${config}.bak ]; then
+        mv -f ${config}.bak ${config}
+    fi
+}
+
+# 设置信号捕获，如果训练
+#   正常退出（EXIT）
+#   用户中断（SIGINT）
+#   Kill终止请求（SIGTERM）
+#   命令执行失败（ERR）
+# 可以自动还原对config文件的修改
+trap restore_config EXIT SIGINT SIGTERM ERR
+
 #训练开始时间
 start_time=$(date +%s)
 
@@ -71,15 +84,10 @@ fi
 end_time=$(date +%s)
 e2e_time=$(( $end_time - $start_time ))
 
-# 将备份文件恢复为原文件
-if [ -f "./tools/train.py.bak" ]; then
-    mv -f "./tools/train.py.bak" "./tools/train.py"
-else
-    echo "Error: could not find the file train.py.bak, restoring failed."
-fi
+sed -i "s/total_batch_size = ${global_batch_size}/total_batch_size = 48/" "$config"
+sed -i "s/num_gpus = ${sum_gpu_num}/num_gpus = 8/" "$config"
 
 log_file=`find ${work_dir} -regex ".*\.log" | sort -r | head -n 1`
-batch_size=6
 
 #结果打印
 echo "------------------ Final result ------------------"
