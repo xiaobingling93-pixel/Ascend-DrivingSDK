@@ -147,8 +147,7 @@ __aicore__ inline void SparseConv3dGrad<T>::InitBuffer(GM_ADDR features, GM_ADDR
         (__gm__ int32_t*)(usrWorkspace) + usedVectorNum_ * featureWspOffset_); // only true for float32
     outIdxWsp_ = inputIdxWsp_[totalPointsCount_];
     sparseNumWsp_ = outIdxWsp_[totalPointsCount_];
-    Fill(sparseNumWsp_, sparseWspOffset_, (int32_t)(0));
-
+    
     kIdxWsp_ = sparseNumWsp_[sparseWspOffset_].template ReinterpretCast<uint8_t>();
 }
 
@@ -167,14 +166,16 @@ __aicore__ inline void SparseConv3dGrad<T>::Process()
             int32_t ubPointCount = min(totalPointsCount_ - pointIdx, (int32_t)(loopPointCount_));
 
             CopyInHashMap(pointIdx, ubPointCount);
-            PipeBarrier<PIPE_ALL>();
+            SetFlag<HardEvent::MTE2_V>(0);
+            WaitFlag<HardEvent::MTE2_V>(0);
 
             uint32_t maskAlign = AlignUp(ubPointCount, INT8_PER_LOOP);
             uint32_t bitLoopCount = DivCeil(ubPointCount, 64);
             for (uint8_t kIdx = 0; kIdx < kernelSize_; ++kIdx) { // uint8_t, kernelSize_ must less than 128
                 uint16_t flagId = kIdx % 8;
                 CompareScalar(maskLocal_, kIdxLocal_, kIdx, CMPMODE::EQ, maskAlign);
-                PipeBarrier<PIPE_ALL>();
+                SetFlag<HardEvent::V_S>(0);
+                WaitFlag<HardEvent::V_S>(0);
 
                 int32_t totalSparseNum = 0;
                 CopyInFeature(bitLoopCount, ubPointCount, totalSparseNum);
@@ -195,7 +196,7 @@ __aicore__ inline void SparseConv3dGrad<T>::Process()
     if ASCEND_IS_AIC {
         for (uint32_t aicTaskOffset = 2 * loopPointCount_ * blockIdx_; aicTaskOffset < totalPointsCount_;
             aicTaskOffset += 2 * loopPointCount_ * aicNum_) {
-            bool sub1Used = (totalPointsCount_ - aicTaskOffset >= loopPointCount_) ? true : false;
+            bool sub1Used = (totalPointsCount_ - aicTaskOffset > loopPointCount_) ? true : false;
             for (uint8_t kIdx = 0; kIdx < kernelSize_; ++kIdx) { // uint8_t, kernelSize_ must less than 128
                 uint16_t sub0FlagId = kIdx % 8;
                 uint16_t sub1FlagId = sub0FlagId + 16;
@@ -225,9 +226,6 @@ __aicore__ inline void SparseConv3dGrad<T>::Process()
 template<typename T>
 __aicore__ inline void SparseConv3dGrad<T>::CopyInHashMap(uint32_t startOffset, int32_t pointCount)
 {
-    if (pointCount <= 0) {
-        return;
-    }
     uint32_t moveAlign = (pointCount == loopPointCount_) ? loopPointCount_ : AlignUp(pointCount, INT32_BLOCK_NUM);
     uint32_t kIdxAlign = AlignUp(moveAlign, INT8_PER_LOOP);
 
@@ -240,9 +238,6 @@ template<typename T>
 __aicore__ inline void SparseConv3dGrad<T>::CopyInFeature(
     uint32_t bitLoopNum, const int32_t pointCount, int32_t& totalSparseM)
 {
-    if (pointCount <= 0) {
-        return;
-    }
     int32_t sparseM = 0;
     for (uint32_t outerIdx = 0; outerIdx < bitLoopNum; ++outerIdx) {
         uint64_t maskValue = maskLocal_.ReinterpretCast<uint64_t>().GetValue(outerIdx);
