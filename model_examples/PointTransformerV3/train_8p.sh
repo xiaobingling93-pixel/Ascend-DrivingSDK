@@ -49,7 +49,6 @@ start_time=$(date +%s)
 python tools/train.py \
   --config-file configs/nuscenes/semseg-pt-v3m1-0-base.py \
   --num-gpus ${num_npu} \
-#  --options save_path=output 2>&1 #| tee train.log
   --options save_path=output > ${output_path_dir}/train.log 2>&1 &
 
 wait
