@@ -1,11 +1,12 @@
 # Copyright (c) 2025, Huawei Technologies.All rights reserved.
 
 import torch, torch_npu
-import numpy as np
-from mx_driving.spconv import SparseConvTensor, SparseConv3d, SparseInverseConv3d
-import spconv.pytorch as spconv
 from torch import nn
 from torch_npu.testing.testcase import TestCase, run_tests
+import numpy as np
+import spconv.pytorch as spconv
+
+from mx_driving import SparseConvTensor, SparseConv3d, SparseInverseConv3d
 
 
 def generate_sparse_data(
