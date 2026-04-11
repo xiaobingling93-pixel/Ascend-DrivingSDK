@@ -669,8 +669,7 @@ protected:
                 }
             }
         }
-        Cast<float, int32_t, false>(
-            shapeFloat, shapeInt, RoundMode::CAST_NONE, MASK_PLACEHOLDER, 2 * taskRpt_, {1, 1, 8, 8});
+        Cast<float, int32_t>(shapeFloat, shapeInt, RoundMode::CAST_NONE, 2 * alignedOneTaskNum_);
     }
 
     __aicore__ inline void CopyInSample(
