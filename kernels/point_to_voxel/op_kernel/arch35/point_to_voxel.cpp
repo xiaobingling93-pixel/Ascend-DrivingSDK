@@ -33,9 +33,9 @@ public:
         coorZOffset_ = coorYOffset_ + avgPts_;
         avgCpParam_.blockLen = avgPts_ * sizeof(T) / ONE_BLK_SIZE;
         tailCpParam_.blockLen = Ceil(tailPts_ * sizeof(T), ONE_BLK_SIZE);
-        voxelScaleX_ = 1.0f / voxelSizeX_;
-        voxelScaleY_ = 1.0f / voxelSizeY_;
-        voxelScaleZ_ = 1.0f / voxelSizeZ_;
+        voxelScaleX_ = voxelSizeX_;
+        voxelScaleY_ = voxelSizeY_;
+        voxelScaleZ_ = voxelSizeZ_;
 
         rptTimes_ = avgPts_ / ONE_REPEAT_FLOAT_SIZE;
         maskRptTimes_ = Ceil(rptTimes_, ONE_REPEAT_B64_SIZE);
@@ -217,6 +217,7 @@ __aicore__ inline void PointToVoxelKernel<T>::EncodeVoxelVF(const LocalTensor<T>
 
     __VEC_SCOPE__ {
         MicroAPI::RegTensor<float> xFloatReg, yFloatReg, zFloatReg;
+        MicroAPI::RegTensor<float> xScaleReg, yScaleReg, zScaleReg;
         MicroAPI::RegTensor<int32_t> xIntReg, yIntReg, zIntReg;
         MicroAPI::RegTensor<int32_t> constValueReg, voxTReg;
 
@@ -227,6 +228,11 @@ __aicore__ inline void PointToVoxelKernel<T>::EncodeVoxelVF(const LocalTensor<T>
             {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::SAT, MicroAPI::MaskMergeMode::ZEROING, RoundMode::CAST_FLOOR};
 
         MicroAPI::Duplicate(constValueReg, invalidNumber, mask);
+        if (is_raw_point) {
+            MicroAPI::Duplicate(xScaleReg, voxelScaleX_, mask);
+            MicroAPI::Duplicate(yScaleReg, voxelScaleY_, mask);
+            MicroAPI::Duplicate(zScaleReg, voxelScaleZ_, mask);
+        }
 
         for (uint16_t taskIdx = 0; taskIdx < rptTimes_; ++taskIdx) {
             uint32_t localOffset = taskIdx * B32_DATA_NUM_PER_REPEAT;
@@ -238,9 +244,9 @@ __aicore__ inline void PointToVoxelKernel<T>::EncodeVoxelVF(const LocalTensor<T>
                 MicroAPI::Adds(xFloatReg, xFloatReg, -coorXMin_, mask);
                 MicroAPI::Adds(yFloatReg, yFloatReg, -coorYMin_, mask);
                 MicroAPI::Adds(zFloatReg, zFloatReg, -coorZMin_, mask);
-                MicroAPI::Muls(xFloatReg, xFloatReg, voxelScaleX_, mask);
-                MicroAPI::Muls(yFloatReg, yFloatReg, voxelScaleY_, mask);
-                MicroAPI::Muls(zFloatReg, zFloatReg, voxelScaleZ_, mask);
+                MicroAPI::Div(xFloatReg, xFloatReg, xScaleReg, mask);
+                MicroAPI::Div(yFloatReg, yFloatReg, yScaleReg, mask);
+                MicroAPI::Div(zFloatReg, zFloatReg, zScaleReg, mask);
                 MicroAPI::Cast<int32_t, float, castF2ITrait>(xIntReg, xFloatReg, mask);
                 MicroAPI::Cast<int32_t, float, castF2ITrait>(yIntReg, yFloatReg, mask);
                 MicroAPI::Cast<int32_t, float, castF2ITrait>(zIntReg, zFloatReg, mask);

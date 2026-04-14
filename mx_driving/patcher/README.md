@@ -1,6 +1,6 @@
 # 一键Patcher 2.0
 
-> **2.0 重构版本**：Patcher 已完成从命令式到声明式的架构重构，提供更精细的补丁粒度、更好的可追踪性和错误定位。1.0 API 保留完全兼容，但推荐使用 2.0 写法。迁移指南请参阅 [MIGRATION.md](./MIGRATION.md)。
+> **2.0 重构版本**：Patcher 已完成从命令式到声明式的架构重构，提供更精细的补丁粒度、更好的可追踪性和错误定位。1.0 API 保留完全兼容，但推荐使用 2.0 写法。
 
 ## 为什么需要一键Patcher？
 
@@ -212,7 +212,6 @@ import warnings
 ```
 
 > **为什么要放在最上方？** Patcher通过Monkey Patch机制替换目标模块的函数/类。如果目标模块在`apply()`之前已被导入，补丁可能无法正确生效。
-
 > **关于torch/torch_npu依赖**：Patcher内部会自动处理torch和torch_npu的导入，用户无需在导入patcher之前手动导入这些模块。
 
 如果你的模型除了 `default_patcher` 里的默认补丁之外，还需要额外配置导入控制或项目补丁，推荐入口写法是：
@@ -433,28 +432,28 @@ patcher.inject_import(
 
 | 功能 | 用途 | 典型场景 |
 |------|------|----------|
-| [skip_import](./FEATURES.md#skip_import-跳过不可用模块) | 跳过不存在的 CUDA 模块 | 运行时 `ModuleNotFoundError`，该模块是 CUDA 专属的 |
-| [replace_import](./FEATURES.md#replace_import-替换模块导入) | 用模块替身替换整个模块 | CUDA 算子模块需替换为 NPU 版本 |
-| [inject_import](./FEATURES.md#inject_import-注入缺失导入) | 向目标模块注入缺失的导入 | 模型代码遗漏了某些 import 导致运行报错 |
+| [skip_import](./FEATURES.md#skip_import---跳过不可用模块) | 跳过不存在的 CUDA 模块 | 运行时 `ModuleNotFoundError`，该模块是 CUDA 专属的 |
+| [replace_import](./FEATURES.md#replace_import---替换模块导入) | 用模块替身替换整个模块 | CUDA 算子模块需替换为 NPU 版本 |
+| [inject_import](./FEATURES.md#inject_import---注入缺失导入) | 向目标模块注入缺失的导入 | 模型代码遗漏了某些 import 导致运行报错 |
 
 ### 补丁机制
 
 | 功能 | 用途 | 典型场景 |
 |------|------|----------|
-| [AtomicPatch](./FEATURES.md#atomicpatch-原子补丁) | 单个属性的 target → replacement 替换 | 替换某个函数为 NPU 版本 |
-| [Patch](./FEATURES.md#patch-组合补丁) | 组织多个相关的 AtomicPatch | 一个算子的 forward + backward |
-| [aliases](./FEATURES.md#aliases-处理模块重导出) | 确保所有访问路径都被替换 | target 通过 `__init__.py` 或 `import as` 存在多个路径 |
-| [precheck](./FEATURES.md#precheck-应用前条件检查) | 应用前检查条件，条件不满足则跳过 | 仅在特定 mmcv 版本下应用 |
-| [runtime_check](./FEATURES.md#runtime_check-运行时条件分发) | 运行时按输入动态选择实现 | 仅对 FP32 输入使用 NPU 优化 |
-| [with_imports](./FEATURES.md#with_imports-延迟导入装饰器) | replacement 函数的延迟导入声明 | 避免循环导入，保持代码风格一致 |
+| [AtomicPatch](./FEATURES.md#atomicpatch---原子补丁) | 单个属性的 target → replacement 替换 | 替换某个函数为 NPU 版本 |
+| [Patch](./FEATURES.md#patch---组合补丁) | 组织多个相关的 AtomicPatch | 一个算子的 forward + backward |
+| [aliases](./FEATURES.md#aliases---处理模块重导出) | 确保所有访问路径都被替换 | target 通过 `__init__.py` 或 `import as` 存在多个路径 |
+| [precheck](./FEATURES.md#precheck---应用前条件检查) | 应用前检查条件，条件不满足则跳过 | 仅在特定 mmcv 版本下应用 |
+| [runtime_check](./FEATURES.md#runtime_check---运行时条件分发) | 运行时按输入动态选择实现 | 仅对 FP32 输入使用 NPU 优化 |
+| [with_imports](./FEATURES.md#with_imports---延迟导入装饰器) | replacement 函数的延迟导入声明 | 避免循环导入，保持代码风格一致 |
 
 ### 辅助工具
 
 | 功能 | 用途 |
 |------|------|
-| [with_profiling](./FEATURES.md#with_profiling-性能采集) | NPU 性能数据采集 |
-| [brake_at](./FEATURES.md#brake_at-训练早停) | 在指定步数停止训练（调试/性能测试用） |
-| [allow_internal_format](./FEATURES.md#allow_internal_format-npu-内部格式控制) | 控制 NPU 内部数据格式 |
+| [with_profiling](./FEATURES.md#with_profiling---性能采集) | NPU 性能数据采集 |
+| [brake_at](./FEATURES.md#brake_at---训练早停) | 在指定步数停止训练（调试/性能测试用） |
+| [allow_internal_format](./FEATURES.md#allow_internal_format---npu-内部格式控制) | 控制 NPU 内部数据格式 |
 | [日志配置](./FEATURES.md#日志配置) | 配置补丁应用的日志行为 |
 | [print_info](./FEATURES.md#补丁状态查看) | 查看补丁应用状态和代码 diff |
 
@@ -472,6 +471,7 @@ patcher.inject_import(
 | | SparseConv3D | 3D稀疏卷积 | ✅ |
 | | Stream | CUDA 流管理 | ✅ |
 | | DDP | 分布式数据并行 | ✅ |
+| | Voxelization | 体素化 | ❌ |
 | | OptimizerHooks | 优化器钩子（mmcv 1.x） | ❌ |
 | **mmengine** | OptimizerWrapper | 优化器包装器 | ❌ |
 | **mmdet** | PseudoSampler | 伪采样器 | ❌ |
@@ -486,7 +486,6 @@ patcher.inject_import(
 | **torch_scatter** | TorchScatter | scatter 操作 NPU 实现 | ❌ |
 
 > ✅ = 已包含在 `default_patcher` 中，`apply()` 即生效。❌ = 需通过 `patcher.add()` 手动添加。
-
 > `NumpyCompat` 属于默认补丁中的早期兼容补丁，会先于后续 `Patch` 类收集过程生效，用于恢复 `np.bool` / `np.float` / `np.int` 等已移除别名，避免第三方库在 import-time 就因 NumPy 兼容性问题提前失败。
 
 ---
@@ -495,7 +494,7 @@ patcher.inject_import(
 
 推荐将所有迁移相关代码集中在独立的 `migrate_to_ascend/` 文件夹中，实现**源代码**（模型原始代码）与**迁移代码**（NPU 适配代码）的物理解耦：
 
-```
+```shell
 my_model/                          ← 源代码（Source Code）
 ├── configs/                         不做任何修改
 ├── projects/
@@ -549,4 +548,3 @@ main()
 | 文档 | 内容 |
 |------|------|
 | [FEATURES.md](./FEATURES.md) | 架构概览、各功能的详细用法、使用场景和示例、进阶用法、API 参考、2.0写法优势 |
-| [MIGRATION.md](./MIGRATION.md) | 从 Patcher 1.0 迁移到 2.0 的指南 |

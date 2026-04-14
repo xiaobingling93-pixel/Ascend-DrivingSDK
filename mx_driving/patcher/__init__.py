@@ -88,6 +88,7 @@ from mx_driving.patcher.mmcv_patch import (
     DeformConv,
     ModulatedDeformConv,
     SparseConv3D,
+    Voxelization,
     Stream,
     DDP,
     OptimizerHooks,
@@ -116,7 +117,7 @@ MSDA = MultiScaleDeformableAttention  # alias
 _ALL_PATCH_CLASSES: List[Type[Patch]] = [
     # mmcv
     MultiScaleDeformableAttention, DeformConv, ModulatedDeformConv,
-    SparseConv3D, Stream, DDP, OptimizerHooks,
+    SparseConv3D, Voxelization, Stream, DDP, OptimizerHooks,
     # mmengine
     OptimizerWrapper,
     # mmdet

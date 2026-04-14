@@ -74,7 +74,6 @@ class TestUniqueVoxel(TestCase):
         dec = mx_driving._C.voxel_to_point(uni_vox, [], [], "XYZ")
         return cnt, dec.cpu().numpy()
 
-    @unittest.skipIf(DEVICE_NAME != "Ascend910B", "OP `PointToVoxel` is only supported on 910B, skip this ut!")
     def test_unique_voxel(self):
         for point_num in self.point_nums:
             voxels = self.gen(point_num)
@@ -93,7 +92,6 @@ class TestUniqueVoxel(TestCase):
             self.assertRtolEqual(res_sort_cpu, res_sort_npu)
             self.assertRtolEqual(res_cpu, res_ori)
 
-    @unittest.skipIf(DEVICE_NAME != "Ascend910B", "OP `PointToVoxel` is only supported on 910B, skip this ut!")
     def test_unique_voxel_view_float32(self):
         for point_num in self.point_nums:
             voxels = self.gen(point_num)
@@ -112,7 +110,6 @@ class TestUniqueVoxel(TestCase):
             self.assertRtolEqual(res_sort_cpu, res_sort_npu)
             self.assertRtolEqual(res_cpu, res_ori)
 
-    @unittest.skipIf(DEVICE_NAME != "Ascend910B", "OP `PointToVoxel` is only supported on 910B, skip this ut!")
     def test_integration(self):
         for point_num in self.point_nums:
             voxels = self.gen_integration(point_num)

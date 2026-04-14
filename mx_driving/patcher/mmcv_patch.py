@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
 """
 MMCV patches for NPU adaptation.
@@ -182,6 +183,67 @@ class SparseConv3D(Patch):
             ])
 
         return patches
+
+
+# =============================================================================
+# Voxelization
+# =============================================================================
+
+class Voxelization(Patch):
+    name = "voxelization"
+    legacy_name = "voxelization"
+    target_module = "mmcv"
+    
+    @classmethod
+    def patches(cls, options: Optional[Dict] = None) -> List[AtomicPatch]:
+        patches_list = [
+            AtomicPatch(
+                target="mmcv.ops.voxelize._Voxelization.forward",
+                replacement=cls._voxelization,
+            ),
+        ]
+        
+        return patches_list
+    
+    @staticmethod
+    def _voxelization(ctx, points, voxel_size, coors_range, max_points=35, max_voxels=20000, deterministic=True):
+        from mx_driving._C import hard_voxelize, dynamic_voxelization
+        import torch
+        empty_tensor = (
+            len(points) == 0,
+            len(voxel_size) == 0,
+            len(coors_range) == 0,
+        )
+        if any(empty_tensor):
+            raise Exception("Error! Input Tensor can not be a empty Tensor.\n")
+        if max_points != -1 and max_voxels != -1:
+            return hard_voxelize(points, voxel_size, coors_range, max_points, max_voxels, "ZYX")[1:]
+
+        float_espolin = 1e-9
+        if voxel_size[0] < float_espolin or voxel_size[1] < float_espolin or voxel_size[2] < float_espolin:
+            print("ERROR: voxel size should larger than zero")
+
+        # compute voxel size
+        grid_x = round((coors_range[3] - coors_range[0]) / voxel_size[0])
+        grid_y = round((coors_range[4] - coors_range[1]) / voxel_size[1])
+        grid_z = round((coors_range[5] - coors_range[2]) / voxel_size[2])
+
+        # create coors
+        coors = points.new_zeros(size=(3, points.size(0)), dtype=torch.int)
+        result = dynamic_voxelization(
+            points,
+            coors,
+            grid_x,
+            grid_y,
+            grid_z,
+            voxel_size[0],
+            voxel_size[1],
+            voxel_size[2],
+            coors_range[0],
+            coors_range[1],
+            coors_range[2],
+        )
+        return result
 
 
 # =============================================================================

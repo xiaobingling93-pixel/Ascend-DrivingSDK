@@ -12,7 +12,7 @@ class _Voxelization(Function):
     @staticmethod
     # pylint: disable=too-many-arguments,huawei-too-many-arguments
     def forward(
-        ctx, points, voxel_size, coors_range, max_points: int = -1, max_voxels: int = -1, deterministic: bool = True
+        ctx, points, voxel_size, coors_range, max_points: int = -1, max_voxels: int = -1, deterministic: bool = True, layout: str = "XYZ"
     ):
         empty_tensor = (
             len(points) == 0,
@@ -22,7 +22,7 @@ class _Voxelization(Function):
         if any(empty_tensor):
             raise Exception("Error! Input Tensor can not be a empty Tensor.\n")
         if max_points != -1 and max_voxels != -1:
-            return mx_driving._C.hard_voxelize(points, voxel_size, coors_range, max_points, max_voxels)
+            return mx_driving._C.hard_voxelize(points, voxel_size, coors_range, max_points, max_voxels, layout)
 
         float_espolin = 1e-9
         if voxel_size[0] < float_espolin or voxel_size[1] < float_espolin or voxel_size[2] < float_espolin:

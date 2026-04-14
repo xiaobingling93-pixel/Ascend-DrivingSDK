@@ -110,8 +110,8 @@ at::Tensor voxel_to_point(const at::Tensor& voxels, const std::vector<float> vox
 
 std::tuple<int32_t, at::Tensor, at::Tensor, at::Tensor, at::Tensor> unique_voxel(const at::Tensor& voxels);
 
-std::tuple<int32_t, at::Tensor, at::Tensor, at::Tensor> hard_voxelize(const at::Tensor& points,
-    const std::vector<float> voxel_sizes, const std::vector<float> coor_ranges, int64_t max_points, int64_t max_voxels);
+std::tuple<int32_t, at::Tensor, at::Tensor, at::Tensor> hard_voxelize(const at::Tensor& points, const std::vector<float> voxel_sizes,
+    const std::vector<float> coor_ranges, int64_t max_points, int64_t max_voxels, const char* layout);
 
 at::Tensor npu_bev_pool(const at::Tensor& feat, const at::Tensor& geom_feat, const at::Tensor& interval_lengths,
     const at::Tensor& interval_starts, int64_t b, int64_t d, int64_t h, int64_t w);
