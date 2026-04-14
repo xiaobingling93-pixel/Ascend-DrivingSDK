@@ -457,6 +457,12 @@ def sigmoid_focal_loss_backward(
     gamma: float,
     alpha: float,
 ) -> None: ...
+def npu_subm_sparse_conv3d_grad_arch35(
+    feature: torch.Tensor, 
+    weight: torch.Tensor,
+    grad_out_features: torch.Tensor,
+    indices_offset: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]: ...
 
 __all__ = [
     "knn",
@@ -515,4 +521,5 @@ __all__ = [
     "npu_subm_sparse_conv3d_grad_v2",
     "sigmoid_focal_loss",
     "sigmoid_focal_loss_backward",
+    "npu_subm_sparse_conv3d_grad_arch35",
 ]

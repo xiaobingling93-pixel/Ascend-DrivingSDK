@@ -254,4 +254,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     // sigmoid_focal_loss
     m.def("sigmoid_focal_loss", &sigmoid_focal_loss);
     m.def("sigmoid_focal_loss_backward", &sigmoid_focal_loss_backward);
+
+    // npu_subm_sparse_conv3d_grad_arch35
+    m.def("npu_subm_sparse_conv3d_grad_arch35", &npu_subm_sparse_conv3d_grad_arch35);
 }

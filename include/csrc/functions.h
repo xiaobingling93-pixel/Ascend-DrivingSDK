@@ -27,7 +27,7 @@ at::Tensor npu_three_interpolate_backward(
 
 std::tuple<at::Tensor, at::Tensor> scatter_max_v3(
     const at::Tensor& src, const at::Tensor& index, c10::optional<at::Tensor> out);
- 
+
 at::Tensor npu_scatter_max_backward(const at::Tensor& x, const at::Tensor& segment_ids, const at::Tensor& num_segments);
 
 at::Tensor npu_scatter_mean_grad(at::Tensor& grad_out, at::Tensor& index, at::Tensor& count, int32_t dim);
@@ -48,9 +48,10 @@ void assign_score_withk(const at::Tensor& points, const at::Tensor& centers, con
     const at::Tensor& knn_idx, at::Tensor& output, int32_t B, int32_t N, int32_t npoint, int32_t M, int32_t K,
     int32_t out_dim, int32_t aggregate);
 
-void assign_score_withk_grad(const at::Tensor& grad_out, const at::Tensor& points, const at::Tensor& centers, const at::Tensor& scores,
-    const at::Tensor& knn_idx, at::Tensor& grad_points, at::Tensor& grad_centers, at::Tensor& grad_scores,
-    int32_t B, int32_t N, int32_t npoint, int32_t M, int32_t K, int32_t out_dim, int32_t aggregate);
+void assign_score_withk_grad(const at::Tensor& grad_out, const at::Tensor& points, const at::Tensor& centers,
+    const at::Tensor& scores, const at::Tensor& knn_idx, at::Tensor& grad_points, at::Tensor& grad_centers,
+    at::Tensor& grad_scores, int32_t B, int32_t N, int32_t npoint, int32_t M, int32_t K, int32_t out_dim,
+    int32_t aggregate);
 
 at::Tensor npu_max_pool2d(const at::Tensor& x, int kernel_size, int stride, int padding);
 
@@ -176,8 +177,8 @@ at::Tensor npu_rotated_overlaps(const at::Tensor& self, const at::Tensor& query_
 at::Tensor npu_rotated_iou(const at::Tensor& boxes, const at::Tensor& query_boxes, bool trans, int64_t mode,
     bool is_cross, double v_threshold, double e_threshold);
 
-at::Tensor npu_boxes_overlap_bev(const at::Tensor& boxes_a, const at::Tensor& boxes_b,
-    int32_t format_flag, int32_t unit_flag, bool clockwise, int32_t mode_flag, bool aligned, double margin);
+at::Tensor npu_boxes_overlap_bev(const at::Tensor& boxes_a, const at::Tensor& boxes_b, int32_t format_flag,
+    int32_t unit_flag, bool clockwise, int32_t mode_flag, bool aligned, double margin);
 
 void roi_align_rotated_v2_forward_npu(const at::Tensor& input, const at::Tensor& rois_map, at::Tensor& output,
     double spatial_scale, int32_t sampling_ratio, int32_t pooled_height, int32_t pooled_width, bool aligned,
@@ -214,8 +215,8 @@ std::tuple<at::Tensor, at::Tensor> npu_roipoint_pool3d_forward(const int32_t num
     const at::Tensor& points, const at::Tensor& point_features, const at::Tensor& boxes3d);
 
 void geometric_kernel_attention_forward(const at::Tensor& value_map, const at::Tensor& spatial_shapes,
-    const at::Tensor& level_start_index, const at::Tensor& sampling_locations,
-    const at::Tensor& attention_weights, at::Tensor& output);
+    const at::Tensor& level_start_index, const at::Tensor& sampling_locations, const at::Tensor& attention_weights,
+    at::Tensor& output);
 
 std::tuple<at::Tensor, at::Tensor> geometric_kernel_attention_backward(const at::Tensor& value,
     const at::Tensor& spatial_shapes, const at::Tensor& level_start_index, const at::Tensor& sampling_locations,
@@ -224,29 +225,30 @@ std::tuple<at::Tensor, at::Tensor> geometric_kernel_attention_backward(const at:
 at::Tensor cal_anchors_heading(const at::Tensor& anchors, const at::Tensor& origin_pos);
 
 std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> npu_gaussian(const at::Tensor& boxes,
-    int32_t out_size_factor, float overlap, int32_t min_radius, float size_x, float size_y,
-    float range_x, float range_y, int32_t feature_map_size_x, int32_t feature_map_size_y,
-    bool norm_bbox, bool with_velocity, bool flip_angle, int32_t max_objs);
+    int32_t out_size_factor, float overlap, int32_t min_radius, float size_x, float size_y, float range_x,
+    float range_y, int32_t feature_map_size_x, int32_t feature_map_size_y, bool norm_bbox, bool with_velocity,
+    bool flip_angle, int32_t max_objs);
 
-at::Tensor npu_draw_gaussian_to_heatmap(const at::Tensor& mask, const at::Tensor& cur_class_id, const at::Tensor& center_int, const at::Tensor& radius,
-    int64_t feature_map_size_x, int64_t feature_map_size_y, int64_t num_classes);
+at::Tensor npu_draw_gaussian_to_heatmap(const at::Tensor& mask, const at::Tensor& cur_class_id,
+    const at::Tensor& center_int, const at::Tensor& radius, int64_t feature_map_size_x, int64_t feature_map_size_y,
+    int64_t num_classes);
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> npu_assign_target_of_single_head(const at::Tensor& boxes, const at::Tensor& cur_class_id,
-    int32_t num_classes, int32_t out_size_factor, float overlap, int32_t min_radius,
+std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> npu_assign_target_of_single_head(const at::Tensor& boxes,
+    const at::Tensor& cur_class_id, int32_t num_classes, int32_t out_size_factor, float overlap, int32_t min_radius,
     const std::vector<float> voxel_size, const std::vector<float> pc_range, at::IntArrayRef feature_map_size,
     bool norm_bbox, bool with_velocity, bool flip_angle, int32_t max_objs);
 
-at::Tensor diff_iou_rotated_sort_vertices(const at::Tensor& vertices, const at::Tensor& mask,
-    const at::Tensor& num_valid);
+at::Tensor diff_iou_rotated_sort_vertices(
+    const at::Tensor& vertices, const at::Tensor& mask, const at::Tensor& num_valid);
 
 at::Tensor grid_sampler2d_v2(const at::Tensor& input, const at::Tensor& grid, int64_t interpolation_mode,
     int64_t padding_mode, bool align_corners);
 
-std::tuple<at::Tensor, at::Tensor> grid_sampler2d_v2_backward(const at::Tensor& grad_output, const at::Tensor& input, const at::Tensor& grid,
-    int64_t interpolation_mode, int64_t padding_mode, bool align_corners);
+std::tuple<at::Tensor, at::Tensor> grid_sampler2d_v2_backward(const at::Tensor& grad_output, const at::Tensor& input,
+    const at::Tensor& grid, int64_t interpolation_mode, int64_t padding_mode, bool align_corners);
 
-at::Tensor npu_scatter_add(at::Tensor& src, at::Tensor& indices, c10::optional<at::Tensor> out,
-    c10::optional<int> dim, c10::optional<int> dim_size);
+at::Tensor npu_scatter_add(at::Tensor& src, at::Tensor& indices, c10::optional<at::Tensor> out, c10::optional<int> dim,
+    c10::optional<int> dim_size);
 
 at::Tensor npu_scatter_add_grad(at::Tensor& grad_out, at::Tensor& index, int32_t dim);
 
@@ -254,7 +256,8 @@ at::Tensor select_idx_with_mask(const at::Tensor& poly_line, const at::Tensor& m
 
 std::tuple<at::Tensor, at::Tensor> cartesian_to_frenet1(const at::Tensor& dist_vec);
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> calc_poly_start_end_sl(const at::Tensor& min_idx, const at::Tensor& poly_line, const at::Tensor& points, const at::Tensor& s_cum);
+std::tuple<at::Tensor, at::Tensor, at::Tensor> calc_poly_start_end_sl(
+    const at::Tensor& min_idx, const at::Tensor& poly_line, const at::Tensor& points, const at::Tensor& s_cum);
 
 at::Tensor min_area_polygons(const at::Tensor& pointsets);
 
@@ -262,36 +265,36 @@ std::tuple<at::Tensor, at::Tensor> radius(at::Tensor& x, at::Tensor& y, at::Tens
 
 at::Tensor npu_unique(const at::Tensor& input);
 
-std::tuple<at::Tensor, at::Tensor> grid_sampler3d_grad_v1(const at::Tensor& grad, const at::Tensor& x, const at::Tensor& grid,
-    int64_t interpolation, int64_t padding, const bool align);
+std::tuple<at::Tensor, at::Tensor> grid_sampler3d_grad_v1(const at::Tensor& grad, const at::Tensor& x,
+    const at::Tensor& grid, int64_t interpolation, int64_t padding, const bool align);
 
 at::Tensor graph_softmax(const at::Tensor& src, const at::Tensor& index, int N);
 
-at::Tensor graph_softmax_grad(const at::Tensor& index,
-    const at::Tensor& softmax_out, const at::Tensor& grad_output, int32_t node_num);
+at::Tensor graph_softmax_grad(
+    const at::Tensor& index, const at::Tensor& softmax_out, const at::Tensor& grad_output, int32_t node_num);
 
 at::Tensor cylinder_query(double radius, double hmin, double hmax, int nsample, const at::Tensor& new_xyz,
     const at::Tensor& xyz, const at::Tensor& rot);
 
-std::tuple<at::Tensor, at::Tensor> npu_subm_sparse_conv3d_grad_v2(
-    const at::Tensor& features, 
-    const at::Tensor& weight,
-    const at::Tensor& grad_out_features,
-    const at::Tensor& indices_offset
-);
+std::tuple<at::Tensor, at::Tensor> npu_subm_sparse_conv3d_grad_v2(const at::Tensor& features, const at::Tensor& weight,
+    const at::Tensor& grad_out_features, const at::Tensor& indices_offset);
 
-std::tuple<at::Tensor, at::Tensor> npu_subm_sparse_conv3d_v3(const at::Tensor& feature, const at::Tensor& weight, const at::Tensor& indices,
-    const at::Tensor& indices_offset, const at::Tensor& map1, const at::Tensor& map2, at::IntArrayRef kernel_size, int in_channels,
-    int out_channels, at::IntArrayRef out_spatial_shape, int batch_size, int with_key);
+std::tuple<at::Tensor, at::Tensor> npu_subm_sparse_conv3d_v3(const at::Tensor& feature, const at::Tensor& weight,
+    const at::Tensor& indices, const at::Tensor& indices_offset, const at::Tensor& map1, const at::Tensor& map2,
+    at::IntArrayRef kernel_size, int in_channels, int out_channels, at::IntArrayRef out_spatial_shape, int batch_size,
+    int with_key);
 
 std::tuple<at::Tensor, at::Tensor> npu_sparse_matmul(const at::Tensor& features, const at::Tensor& weight,
     const at::Tensor& unique_indices_offset, const at::Tensor& sorted_idx_to_former_indices,
     const at::Tensor& outidx_pair);
 
 void sigmoid_focal_loss(const at::Tensor& input, const at::Tensor& target, const at::Tensor& weight,
-                                    const at::Tensor& output, double gamma, double alpha);
+    const at::Tensor& output, double gamma, double alpha);
 
 void sigmoid_focal_loss_backward(const at::Tensor& input, const at::Tensor& target, const at::Tensor& weight,
-                                    const at::Tensor& grad_input, double gamma, double alpha);
+    const at::Tensor& grad_input, double gamma, double alpha);
+
+std::tuple<at::Tensor, at::Tensor> npu_subm_sparse_conv3d_grad_arch35(const at::Tensor& features,
+    const at::Tensor& weight, const at::Tensor& grad_out_features, const at::Tensor& indices_offset);
 
 #endif // CSRC_FUNCTIONS_H_

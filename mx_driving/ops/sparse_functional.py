@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch_npu
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
 
@@ -154,9 +155,16 @@ class SubMConvFunction(Function):
     # pylint: disable=too-many-return-values
     def backward(ctx: Any, grad_out_features: torch.Tensor, grad_outidx=None, grad_offset=None) -> tuple:
         features, weight, ouidx_offset = ctx.saved_tensors
-        feature_grad, weight_grad = mx_driving._C.npu_subm_sparse_conv3d_grad_v2(
-            features, weight, grad_out_features, ouidx_offset
-        )
+
+        DEVICE_NAME = torch_npu.npu.get_device_name(features.device.index)
+        if 'Ascend910' in DEVICE_NAME:
+            subm_grad_func = mx_driving._C.npu_subm_sparse_conv3d_grad_v2
+        elif 'Ascend950' in DEVICE_NAME:
+            subm_grad_func = mx_driving._C.npu_subm_sparse_conv3d_grad_arch35
+        else:
+            raise NotImplementedError('The npu_subm_sparse_conv3d_grad operator currently only supports Ascend910B, Ascend910C and Ascend950.')
+
+        feature_grad, weight_grad = subm_grad_func(features, weight, grad_out_features, ouidx_offset)
 
         return feature_grad, None, weight_grad, None, None, None, None, None, None, None, None, None, None
 
