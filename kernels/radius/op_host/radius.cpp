@@ -131,7 +131,6 @@ static ge::graphStatus InfershapeForRadius(gert::InferShapeContext *context)
     uint32_t numPointsY = yShape->GetDim(1);
     uint32_t outtmpdim0 = outTempShape->GetDim(0);
     uint32_t outfinaldim0 = outFinalShape->GetDim(0);
-    uint32_t batchSize = ptrXShape->GetDim(0) - 1;
     const int32_t maxNumNeighbors = *attr->GetAttrPointer<int32_t>(1);
 
     outTempShape->SetDimNum(outtmpdim0);

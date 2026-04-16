@@ -1,26 +1,18 @@
 #include "deformable_conv2d_grad_v2_tiling.h"
 #include "register/op_def_registry.h"
-#include "tiling/tiling_api.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "ge/utils.h"
 
 namespace {
 constexpr uint8_t INPUT_FEATURES_IDX = 0;
 constexpr uint8_t INPUT_WEIGHT_IDX = 1;
-constexpr uint8_t INPUT_BIAS_IDX = 2;
 constexpr uint8_t INPUT_OFFSET_IDX = 3;
 constexpr uint8_t INPUT_MASK_IDX = 4;
 
 constexpr uint8_t OUTPUT_FEATURES_GRAD_IDX = 0;
 constexpr uint8_t OUTPUT_WEIGHT_GRAD_IDX = 1;
-constexpr uint8_t OUTPUT_BIAS_GRAD_IDX = 2;
 constexpr uint8_t OUTPUT_OFFSET_GRAD_IDX = 3;
 constexpr uint8_t OUTPUT_MASK_GRAD_IDX = 4;
-
-constexpr uint8_t BATCH_DIM = 0;
-constexpr uint8_t H_DIM = 1;
-constexpr uint8_t W_DIM = 2;
-constexpr uint8_t CHANNELS_DIM = 3;
 
 constexpr uint8_t HALF_BYTE_SIZE = 2;
 constexpr uint8_t FLOAT_BYTE_SIZE = 4;
@@ -225,11 +217,6 @@ static ge::graphStatus InferShape4DeformableConv2dGradV2(gert::InferShapeContext
     CHECK_NULLPTR(weightShape);
     CHECK_NULLPTR(offsetShape);
     CHECK_NULLPTR(maskShape);
-
-    int64_t batchSize = xShape->GetDim(BATCH_DIM);
-    int64_t hIn = xShape->GetDim(H_DIM);
-    int64_t wIn = xShape->GetDim(W_DIM);
-    int64_t inChannels = xShape->GetDim(CHANNELS_DIM);
 
     gert::Shape* xGradShape = context->GetOutputShape(OUTPUT_FEATURES_GRAD_IDX);
     gert::Shape* weightGradShape = context->GetOutputShape(OUTPUT_WEIGHT_GRAD_IDX);

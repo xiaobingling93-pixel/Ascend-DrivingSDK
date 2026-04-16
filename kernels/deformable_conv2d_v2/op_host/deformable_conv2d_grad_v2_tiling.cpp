@@ -6,20 +6,13 @@
 namespace {
 constexpr uint8_t INPUT_X_IDX = 0;
 constexpr uint8_t INPUT_WEIGHT_IDX = 1;
-constexpr uint8_t INPUT_BIAS_IDX = 2;
 constexpr uint8_t INPUT_OFFSET_IDX = 3;
 constexpr uint8_t INPUT_MASK_IDX = 4;
 
 constexpr uint8_t OUTPUT_X_GRAD_IDX = 0;
 constexpr uint8_t OUTPUT_WEIGHT_GRAD_IDX = 1;
-constexpr uint8_t OUTPUT_BIAS_GRAD_IDX = 2;
 constexpr uint8_t OUTPUT_OFFSET_GRAD_IDX = 3;
 constexpr uint8_t OUTPUT_MASK_GRAD_IDX = 4;
-
-constexpr uint8_t DIM_IDX_ZERO = 0;
-constexpr uint8_t DIM_IDX_ONE = 1;
-constexpr uint8_t DIM_IDX_TWO = 2;
-constexpr uint8_t DIM_IDX_THREE = 3;
 } // namespace
 
 
@@ -148,11 +141,6 @@ static ge::graphStatus InferShape4DeformableConv2dGradV2(gert::InferShapeContext
     CHECK_NULLPTR(offsetShape);
     CHECK_NULLPTR(maskShape);
 
-    int64_t batchSize = xShape->GetDim(DIM_IDX_ZERO);
-    int64_t hIn = xShape->GetDim(DIM_IDX_ONE);
-    int64_t wIn = xShape->GetDim(DIM_IDX_TWO);
-    int64_t inChannels = xShape->GetDim(DIM_IDX_THREE);
-
     gert::Shape* xGradShape = context->GetOutputShape(OUTPUT_X_GRAD_IDX);
     gert::Shape* weightGradShape = context->GetOutputShape(OUTPUT_WEIGHT_GRAD_IDX);
     gert::Shape* offsetGradShape = context->GetOutputShape(OUTPUT_OFFSET_GRAD_IDX);
@@ -166,6 +154,7 @@ static ge::graphStatus InferShape4DeformableConv2dGradV2(gert::InferShapeContext
     *weightGradShape = *weightShape;
     *offsetGradShape = *offsetShape;
     *maskGradShape = *maskShape;
+    return GRAPH_SUCCESS;
 }
 
 static ge::graphStatus InferDataType4DeformableConv2dGradV2(gert::InferDataTypeContext *context)

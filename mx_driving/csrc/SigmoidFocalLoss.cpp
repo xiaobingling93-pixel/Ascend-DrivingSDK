@@ -23,10 +23,10 @@
 
 #include "csrc/OpApiCommon.h"
 #include "csrc/functions.h"
-#include <iostream>
 
 void sigmoid_focal_loss(const at::Tensor& input, const at::Tensor& target, const at::Tensor& weight,
-                                    const at::Tensor& output, double gamma, double alpha) {                                      
+    const at::Tensor& output, double gamma, double alpha)
+{
     int64_t n_class = input.size(1);
     at::Tensor target_y = at::ones_like(input);
     if (n_class == 1) {
@@ -44,12 +44,12 @@ void sigmoid_focal_loss(const at::Tensor& input, const at::Tensor& target, const
         weight_selected = weight_selected.unsqueeze(1);
         weight_y = weight_selected.expand_as(input);
     }
-    string reduction = "none";
     EXEC_NPU_CMD(aclnnSigmoidFocalLoss, input, target_y, weight_y, gamma, alpha, output);
 }
 
 void sigmoid_focal_loss_backward(const at::Tensor& input, const at::Tensor& target, const at::Tensor& weight,
-                                    const at::Tensor& grad_input, double gamma, double alpha) {
+    const at::Tensor& grad_input, double gamma, double alpha)
+{
     int64_t n_class = input.size(1);
     at::Tensor target_y = at::ones_like(input);
     if (n_class == 1) {
@@ -67,6 +67,5 @@ void sigmoid_focal_loss_backward(const at::Tensor& input, const at::Tensor& targ
         weight_selected = weight_selected.unsqueeze(1);
         weight_y = weight_selected.expand_as(input);
     }
-    string reduction = "none";
     EXEC_NPU_CMD(aclnnSigmoidFocalLossGrad, input, target_y, weight_y, gamma, alpha, grad_input);
 }

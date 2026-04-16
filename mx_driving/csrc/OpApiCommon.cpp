@@ -15,9 +15,6 @@
 
 #include "csrc/OpApiCommon.h"
 
-#include <pwd.h>
-#include <sys/stat.h>
-
 thread_local char g_hashBuf[kHashBufSize];
 thread_local int g_hashOffset = 0;
 constexpr int g_mix64Shift = 33;
