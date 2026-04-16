@@ -3,9 +3,7 @@
  *
  */
 
-#include "kernel_utils.h"
 #include "kernel_operator.h"
-#include "kernel_tpipe_impl.h"
 #include "msda.h"
 
 using namespace AscendC;
@@ -16,7 +14,7 @@ constexpr uint16_t taskRpt_ = taskOffset_ / B32_DATA_NUM_PER_REPEAT;
 
 
 template<typename T, typename U>
-__aicore__ __attribute__ ((always_inline)) inline bool GetValidPoint(
+__simt_callee__ __aicore__ __attribute__ ((always_inline)) inline bool GetValidPoint(
     __ubuf__ T* locationFloat, __ubuf__ T* shapeFloat, U oneHeadNum_,
     U headIdx, U& point, T& x, T& y, T& height, T& width)
 {

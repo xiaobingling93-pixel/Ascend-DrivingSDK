@@ -5,9 +5,7 @@
 #ifndef MSDA_H
 #define MSDA_H
 
-#include "kernel_utils.h"
 #include "kernel_operator.h"
-#include "kernel_tpipe_impl.h"
 
 using namespace AscendC;
 using namespace MicroAPI;
