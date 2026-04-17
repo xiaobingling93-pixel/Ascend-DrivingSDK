@@ -395,7 +395,9 @@ extern "C" __global__ __aicore__ void deformable_conv2d_grad_v2(GM_ADDR inputFea
     if (usrWorkspace == nullptr) {
         return;
     }
-
+    
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+    
     TPipe pipe;
 
     if (TILING_KEY_IS(0)) {
