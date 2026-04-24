@@ -409,7 +409,6 @@ def boxes_iou_bev(
 def cartesian_to_frenet(
     pt: torch.Tensor, poly_line: torch.Tensor
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: ...
-def min_area_polygons(pointsets: torch.Tensor) -> torch.Tensor: ...
 def radius(
     x: torch.Tensor, y: torch.Tensor, ptr_x: torch.Tensor, ptr_y: torch.Tensor, r: int, max_num_neighbors: int
 ) -> torch.Tensor: ...
@@ -512,7 +511,6 @@ __all__ = [
     "diff_iou_rotated_2d",
     "boxes_iou_bev",
     "cartesian_to_frenet",
-    "min_area_polygons",
     "radius",
     "graph_softmax",
     "graph_softmax_grad",

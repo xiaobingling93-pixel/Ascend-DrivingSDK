@@ -388,9 +388,9 @@ static ge::graphStatus InferDtype4ScatterAddGrad(gert::InferDataTypeContext *con
 
 
 namespace ops {
-class ScatterAddGradV2 : public OpDef {
+class ScatterAddGradV1 : public OpDef {
 public:
-    explicit ScatterAddGradV2(const char* name) : OpDef(name)
+    explicit ScatterAddGradV1(const char* name) : OpDef(name)
     {
         this->Input("grad_out")
             .ParamType(REQUIRED)
@@ -417,5 +417,5 @@ public:
     }
 };
 
-OP_ADD(ScatterAddGradV2);
+OP_ADD(ScatterAddGradV1);
 }

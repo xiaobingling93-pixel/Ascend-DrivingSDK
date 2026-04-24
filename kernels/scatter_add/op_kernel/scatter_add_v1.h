@@ -1,8 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
  */
-#ifndef _SCATTER_ADD_V3_H_
-#define _SCATTER_ADD_V3_H_
+#ifndef SCATTER_ADD_V1_H_
+#define SCATTER_ADD_V1_H_
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
@@ -13,7 +13,7 @@ constexpr uint64_t MAX_MASK = 64;
 constexpr uint64_t BLOCK_SIZE = 32;
 constexpr uint64_t MASK_ALIGN_SIZE = 256;
 constexpr uint64_t DIM_SIZE_THRESHOLD = 200;
-constexpr uint64_t MAX_COPY_PAD =  4095;
+constexpr uint64_t MAX_COPY_PAD = 4095;
 constexpr uint64_t BUFFER_NUM_MAX = 8;
 constexpr uint64_t UB_SIZE_COEFF = 2;
 
@@ -21,40 +21,19 @@ class ScatterAddBaseKernel {
 public:
     __aicore__ inline ScatterAddBaseKernel() = delete;
 
-    __aicore__ inline ScatterAddBaseKernel(GM_ADDR src, GM_ADDR indices, GM_ADDR out, 
-        ScatterAddTilingDataV3* tiling_data, TPipe* pipe) : _blockIdx(GetBlockIdx()), _pipe(pipe)
+    __aicore__ inline ScatterAddBaseKernel(
+        GM_ADDR src, GM_ADDR indices, GM_ADDR out, ScatterAddTilingDataV1* tiling_data, TPipe* pipe)
+        : _blockIdx(GetBlockIdx()), _pipe(pipe)
     {
         ASSERT(GetBlockNum() != 0 && "block dim can not be zero!");
         initTiling(tiling_data);
         initGM(src, indices, out);
     }
 
-private:
-    __aicore__ inline void initTiling(ScatterAddTilingDataV3* tiling_data) 
-    {
-        _totalHead = tiling_data->totalHead;
-        _tailLen = tiling_data->tailLen;
-        _dimSize = tiling_data->dimSize;
-        _ubSize = tiling_data->ubSize;
-        _srcDimSize = tiling_data->srcDimSize;
-        _totalSrcNum = tiling_data->totalSrcNum;
-        _totalOutNum = tiling_data->totalOutNum;
-        _totalIndicesNum = tiling_data->totalIndicesNum;
-        _outNumPerHead= tiling_data->outNumPerHead;
-        _indicesNumPerHead = tiling_data->indicesNumPerHead;
-        _dataNumPerBlock = BLOCK_SIZE / sizeof(DTYPE_OUT);
-    }
-
-    __aicore__ inline void initGM(GM_ADDR src, GM_ADDR indices, GM_ADDR out)
-    {
-        _srcGm.SetGlobalBuffer((__gm__ DTYPE_SRC*)src, _totalSrcNum);
-        _outGm.SetGlobalBuffer((__gm__ DTYPE_OUT*)out, _totalOutNum);
-        _indicesGm.SetGlobalBuffer((__gm__ DTYPE_INDICES*)indices, _totalIndicesNum);
-    }
-
 protected:
-    template <typename T1, typename T2>
-    __aicore__ inline T1 ceilDiv(T1 a, T2 b) {
+    template<typename T1, typename T2>
+    __aicore__ inline T1 ceilDiv(T1 a, T2 b)
+    {
         return b == 0 ? 0 : (a + b - 1) / b;
     };
 
@@ -86,14 +65,37 @@ protected:
     uint64_t _indicesNumPerHead;
     uint64_t _dataNumPerBlock;
     uint64_t _loop;
+
+private:
+    __aicore__ inline void initTiling(ScatterAddTilingDataV1* tiling_data)
+    {
+        _totalHead = tiling_data->totalHead;
+        _tailLen = tiling_data->tailLen;
+        _dimSize = tiling_data->dimSize;
+        _ubSize = tiling_data->ubSize;
+        _srcDimSize = tiling_data->srcDimSize;
+        _totalSrcNum = tiling_data->totalSrcNum;
+        _totalOutNum = tiling_data->totalOutNum;
+        _totalIndicesNum = tiling_data->totalIndicesNum;
+        _outNumPerHead = tiling_data->outNumPerHead;
+        _indicesNumPerHead = tiling_data->indicesNumPerHead;
+        _dataNumPerBlock = BLOCK_SIZE / sizeof(DTYPE_OUT);
+    }
+
+    __aicore__ inline void initGM(GM_ADDR src, GM_ADDR indices, GM_ADDR out)
+    {
+        _srcGm.SetGlobalBuffer((__gm__ DTYPE_SRC*)src, _totalSrcNum);
+        _outGm.SetGlobalBuffer((__gm__ DTYPE_OUT*)out, _totalOutNum);
+        _indicesGm.SetGlobalBuffer((__gm__ DTYPE_INDICES*)indices, _totalIndicesNum);
+    }
 };
 
 class ScatterAddFullyLoad final : public ScatterAddBaseKernel {
 public:
     __aicore__ inline ScatterAddFullyLoad() = delete;
 
-    __aicore__ inline ScatterAddFullyLoad(GM_ADDR src, GM_ADDR indices, 
-        GM_ADDR out, ScatterAddTilingDataV3* tiling_data, TPipe* pipe) 
+    __aicore__ inline ScatterAddFullyLoad(
+        GM_ADDR src, GM_ADDR indices, GM_ADDR out, ScatterAddTilingDataV1* tiling_data, TPipe* pipe)
         : ScatterAddBaseKernel(src, indices, out, tiling_data, pipe)
     {
         initTiling(tiling_data);
@@ -101,7 +103,7 @@ public:
     }
 
     __aicore__ inline void Process()
-    {   
+    {
         // step 1: fully load OUT into ub
         _outLocal = _outBuf.Get<DTYPE_OUT>();
         Duplicate(_outLocal, 0.0f, AlignUp(_totalOutNum, BLOCK_SIZE / sizeof(DTYPE_OUT)));
@@ -124,7 +126,7 @@ public:
     }
 
 private:
-    __aicore__ inline void initTiling(ScatterAddTilingDataV3* tiling_data)
+    __aicore__ inline void initTiling(ScatterAddTilingDataV1* tiling_data)
     {
         _indicesNumBigCore = tiling_data->indicesNumBigCore;
         _indicesNumSmallCore = tiling_data->indicesNumSmallCore;
@@ -151,7 +153,8 @@ private:
 
         // vec operation requires additional memory in this case
         if (_dimSize <= DIM_SIZE_THRESHOLD) {
-            uint64_t srcMaskNum = AlignUp(_indicesMaxLoadableNum * sizeof(DTYPE_SRC), MASK_ALIGN_SIZE) / sizeof(DTYPE_SRC);
+            uint64_t srcMaskNum =
+                AlignUp(_indicesMaxLoadableNum * sizeof(DTYPE_SRC), MASK_ALIGN_SIZE) / sizeof(DTYPE_SRC);
             uint64_t maskBitNum = AscendCUtils::GetBitSize(sizeof(uint8_t));
             uint64_t maskBufSize = ceilDiv(srcMaskNum, maskBitNum) * sizeof(uint8_t);
 
@@ -191,8 +194,10 @@ private:
             WaitFlag<HardEvent::MTE2_V>(EVENT_ID0);
 
             for (uint64_t idxVal = 0; idxVal < _dimSize; idxVal++) {
-                CompareScalar(_maskLocal, _indicesLocal, static_cast<DTYPE_INDICES>(idxVal), CMPMODE::EQ, cmpLenAlign256);
-                Select(_selectedSrcLocal, _maskLocal, _srcLocal, static_cast<DTYPE_SRC>(0), SELMODE::VSEL_TENSOR_SCALAR_MODE, loadLen);
+                CompareScalar(
+                    _maskLocal, _indicesLocal, static_cast<DTYPE_INDICES>(idxVal), CMPMODE::EQ, cmpLenAlign256);
+                Select(_selectedSrcLocal, _maskLocal, _srcLocal, static_cast<DTYPE_SRC>(0),
+                    SELMODE::VSEL_TENSOR_SCALAR_MODE, loadLen);
                 ReduceSum<float>(_reduceSumLocal, _selectedSrcLocal, _sharedLocal, loadLen);
                 uint64_t outOffset = headID * _outNumPerHead + idxVal;
                 _outLocal.SetValue(outOffset, _outLocal.GetValue(outOffset) + _reduceSumLocal.GetValue(0));
@@ -219,7 +224,8 @@ private:
 
         for (uint64_t headID = startHeadID; headID <= endHeadID; headID++) {
             uint64_t localStart = max(indicesGlobalOffset, headID * _indicesNumPerHead) - indicesGlobalOffset;
-            uint64_t localEnd = min(indicesGlobalOffset + loadableNum, (headID + 1) * _indicesNumPerHead) - indicesGlobalOffset;
+            uint64_t localEnd =
+                min(indicesGlobalOffset + loadableNum, (headID + 1) * _indicesNumPerHead) - indicesGlobalOffset;
 
             for (uint64_t pos = localStart; pos < localEnd; pos++) {
                 DTYPE_INDICES idxVal = _indicesLocal.GetValue(pos);
@@ -234,7 +240,7 @@ private:
         if (_indicesNumLeftover == 0) {
             return _indicesMaxLoadableNum;
         }
-        return i == _loop-1 ? _indicesNumLeftover : _indicesMaxLoadableNum;
+        return i == _loop - 1 ? _indicesNumLeftover : _indicesMaxLoadableNum;
     }
 
 private:
@@ -262,8 +268,8 @@ class ScatterAddMultiHeads final : public ScatterAddBaseKernel {
 public:
     __aicore__ inline ScatterAddMultiHeads() = delete;
 
-    __aicore__ inline ScatterAddMultiHeads(GM_ADDR src, GM_ADDR indices, 
-        GM_ADDR out, ScatterAddTilingDataV3* tiling_data, TPipe* pipe) 
+    __aicore__ inline ScatterAddMultiHeads(
+        GM_ADDR src, GM_ADDR indices, GM_ADDR out, ScatterAddTilingDataV1* tiling_data, TPipe* pipe)
         : ScatterAddBaseKernel(src, indices, out, tiling_data, pipe)
     {
         initTiling(tiling_data);
@@ -278,7 +284,7 @@ public:
     }
 
 private:
-    __aicore__ inline void initTiling(ScatterAddTilingDataV3* tiling_data)
+    __aicore__ inline void initTiling(ScatterAddTilingDataV1* tiling_data)
     {
         _headNumBigCore = tiling_data->headNumBigCore;
         _headNumSmallCore = tiling_data->headNumSmallCore;
@@ -288,11 +294,11 @@ private:
         if (_blockIdx < _bigCoreNum) {
             _loop = ceilDiv(_headNumBigCore, _headNumPerTask);
             _headNumLeftover = _headNumBigCore % _headNumPerTask;
-            _headIdOffset =  _blockIdx * _headNumBigCore;
+            _headIdOffset = _blockIdx * _headNumBigCore;
         } else {
             _loop = ceilDiv(_headNumSmallCore, _headNumPerTask);
             _headNumLeftover = _headNumSmallCore % _headNumPerTask;
-            _headIdOffset =  _bigCoreNum * _headNumBigCore + (_blockIdx - _bigCoreNum) * _headNumSmallCore;
+            _headIdOffset = _bigCoreNum * _headNumBigCore + (_blockIdx - _bigCoreNum) * _headNumSmallCore;
         }
     }
 
@@ -311,7 +317,7 @@ private:
         _srcLocal = _srcBuf.Get<DTYPE_SRC>();
         _outLocal = _outBuf.Get<DTYPE_OUT>();
         _indicesLocal = _indicesBuf.Get<DTYPE_INDICES>();
-        
+
         uint64_t startHeadID = _headIdOffset + i * _headNumPerTask;
         uint64_t headNum = calcHeadNum(i);
         uint64_t outLoadOffset = startHeadID * _outNumPerHead;
@@ -336,11 +342,12 @@ private:
             }
         }
 
-        DataCopyPad(_outGm[outLoadOffset], _outLocal, {1, static_cast<uint32_t>(outLoadNum*sizeof(DTYPE_OUT)), 0, 0, 0});
+        DataCopyPad(
+            _outGm[outLoadOffset], _outLocal, {1, static_cast<uint32_t>(outLoadNum * sizeof(DTYPE_OUT)), 0, 0, 0});
     }
 
     __aicore__ inline uint64_t calcHeadNum(uint64_t i)
-    {   
+    {
         if (_headNumLeftover == 0) {
             return _headNumPerTask;
         }
@@ -361,8 +368,8 @@ class ScatterAddHeadInBatch final : public ScatterAddBaseKernel {
 public:
     __aicore__ inline ScatterAddHeadInBatch() = delete;
 
-    __aicore__ inline ScatterAddHeadInBatch(GM_ADDR src, GM_ADDR indices, 
-        GM_ADDR out, ScatterAddTilingDataV3* tiling_data, TPipe* pipe)
+    __aicore__ inline ScatterAddHeadInBatch(
+        GM_ADDR src, GM_ADDR indices, GM_ADDR out, ScatterAddTilingDataV1* tiling_data, TPipe* pipe)
         : ScatterAddBaseKernel(src, indices, out, tiling_data, pipe)
     {
         if constexpr (largeHead) {
@@ -381,7 +388,7 @@ public:
     }
 
 private:
-    __aicore__ inline void initTilingLargeHead(ScatterAddTilingDataV3* tiling_data)
+    __aicore__ inline void initTilingLargeHead(ScatterAddTilingDataV1* tiling_data)
     {
         _headNumBigCore = tiling_data->headNumBigCore;
         _headNumSmallCore = tiling_data->headNumSmallCore;
@@ -411,7 +418,7 @@ private:
         _indicesNumLeftover = _indicesNumPerHead % _indicesNumPerBatch;
     }
 
-    __aicore__ inline void initTilingFewHeads(ScatterAddTilingDataV3* tiling_data)
+    __aicore__ inline void initTilingFewHeads(ScatterAddTilingDataV1* tiling_data)
     {
         _indicesNumPerBatch = tiling_data->indicesNumPerBatch;
         _maxOutNumPerBatch = tiling_data->maxOutNumPerBatch;
@@ -423,7 +430,7 @@ private:
         _headIdOffset = _blockIdx / _coreNumPerHead;
         _headPartId = _blockIdx % _coreNumPerHead;
 
-        if (_headPartId == _coreNumPerHead-1) {
+        if (_headPartId == _coreNumPerHead - 1) {
             _outNumPerCore = _dimSize - _outNumPerCore * (_coreNumPerHead - 1);
         }
 
@@ -448,7 +455,8 @@ private:
         _pipe->InitBuffer(_indicesBuf, AlignUp(_indicesNumPerBatch, _dataNumPerBlock) * sizeof(DTYPE_INDICES));
 
         uint64_t maskBitNum = AscendCUtils::GetBitSize(sizeof(uint8_t));
-        uint64_t indicesMaskNum = AlignUp(_indicesNumPerBatch * sizeof(DTYPE_INDICES), MASK_ALIGN_SIZE) / sizeof(DTYPE_INDICES);
+        uint64_t indicesMaskNum =
+            AlignUp(_indicesNumPerBatch * sizeof(DTYPE_INDICES), MASK_ALIGN_SIZE) / sizeof(DTYPE_INDICES);
         _maskLen = AlignUp(ceilDiv(indicesMaskNum, maskBitNum), BLOCK_SIZE);
         _pipe->InitBuffer(_maskBuf, _maskLen * sizeof(uint8_t) * UB_SIZE_COEFF);
     }
@@ -492,12 +500,11 @@ private:
     }
 
     // traverse indices within headIDth HEAD
-    __aicore__ inline void computeBatch(uint64_t headID, uint64_t outNum, 
-        uint64_t outLoadOffset, int32_t idxValOffset)
+    __aicore__ inline void computeBatch(uint64_t headID, uint64_t outNum, uint64_t outLoadOffset, int32_t idxValOffset)
     {
         _indicesMask = _maskBuf.Get<uint8_t>();
         uint64_t indicesHeadOffset = headID * _indicesNumPerHead;
-        
+
         for (uint64_t n = 0; n < _indicesLoop; n++) {
             uint64_t indicesLoadOffset = indicesHeadOffset + n * _indicesNumPerBatch;
             uint64_t indicesLoadNum = calcBatchIndicesNum(n);
@@ -513,14 +520,15 @@ private:
             Adds(_indicesLocal, _indicesLocal, idxValOffset, indicesLoadAlign);
             Cast(_indicesLocal.ReinterpretCast<float>(), _indicesLocal, RoundMode::CAST_NONE, indicesLoadNum);
             CompareScalar(_indicesMask, _indicesLocal.ReinterpretCast<float>(), 0.0f, CMPMODE::GE, cmpLenAlign256);
-            CompareScalar(_indicesMask[_maskLen], _indicesLocal.ReinterpretCast<float>(), outNum*1.0f, CMPMODE::LT, cmpLenAlign256);
+            CompareScalar(_indicesMask[_maskLen], _indicesLocal.ReinterpretCast<float>(), outNum * 1.0f, CMPMODE::LT,
+                cmpLenAlign256);
             Cast(_indicesLocal, _indicesLocal.ReinterpretCast<float>(), RoundMode::CAST_RINT, indicesLoadNum);
             And(_indicesMask.ReinterpretCast<uint16_t>(), _indicesMask.ReinterpretCast<uint16_t>(),
                 _indicesMask[_maskLen].ReinterpretCast<uint16_t>(), _maskLen);
-            
+
             for (uint64_t m = 0; m < mask64BitNum; m++) {
                 uint64_t mask = _indicesMask.ReinterpretCast<uint64_t>().GetValue(m);
-                uint64_t maxPos = (m == mask64BitNum-1) ? indicesLoadNum - m * 64 : 64;
+                uint64_t maxPos = (m == mask64BitNum - 1) ? indicesLoadNum - m * 64 : 64;
 
                 for (int32_t p = ScalarGetSFFValue<1>(mask); p >= 0 && p < maxPos; p = ScalarGetSFFValue<1>(mask)) {
                     mask = sbitset0(mask, p);
@@ -563,7 +571,7 @@ private:
     // in case large head
     uint64_t _headNumBigCore;
     uint64_t _headNumSmallCore;
-    // in case head num less than core num 
+    // in case head num less than core num
     uint64_t _headPartId;
     uint64_t _coreNumPerHead;
     uint64_t _outNumPerCore;
@@ -578,8 +586,8 @@ class ScatterAddWithTail final : public ScatterAddBaseKernel {
 public:
     __aicore__ inline ScatterAddWithTail() = delete;
 
-    __aicore__ inline ScatterAddWithTail(GM_ADDR src, GM_ADDR indices, 
-        GM_ADDR out, ScatterAddTilingDataV3* tiling_data, TPipe* pipe) 
+    __aicore__ inline ScatterAddWithTail(
+        GM_ADDR src, GM_ADDR indices, GM_ADDR out, ScatterAddTilingDataV1* tiling_data, TPipe* pipe)
         : ScatterAddBaseKernel(src, indices, out, tiling_data, pipe)
     {
         if constexpr (smallTail) {
@@ -602,7 +610,7 @@ public:
     }
 
 private:
-    __aicore__ inline void initTilingSmallTail(ScatterAddTilingDataV3* tiling_data)
+    __aicore__ inline void initTilingSmallTail(ScatterAddTilingDataV1* tiling_data)
     {
         _srcTailBigCore = tiling_data->srcTailBigCore;
         _srcTailSmallCore = tiling_data->srcTailSmallCore;
@@ -628,7 +636,7 @@ private:
         }
     }
 
-    __aicore__ inline void initTilingLargeTail(ScatterAddTilingDataV3* tiling_data)
+    __aicore__ inline void initTilingLargeTail(ScatterAddTilingDataV1* tiling_data)
     {
         _srcTailBigCore = tiling_data->srcTailBigCore;
         _srcTailSmallCore = tiling_data->srcTailSmallCore;
@@ -638,11 +646,12 @@ private:
         _dbTimes = min(_ubSize / sizeof(DTYPE_SRC) / min(_tailLen, _tailLenThreshold), BUFFER_NUM_MAX);
         _dbTimes = (_dbTimes == 0) ? 1 : _dbTimes;
 
-        uint64_t srcElemNumTmp = min(static_cast<uint64_t>(AlignUp(_tailLen, _dataNumPerBlock)), _tailLenThreshold) * _dbTimes;
+        uint64_t srcElemNumTmp =
+            min(static_cast<uint64_t>(AlignUp(_tailLen, _dataNumPerBlock)), _tailLenThreshold) * _dbTimes;
         uint64_t availIndicesSize = _ubSize - srcElemNumTmp * sizeof(DTYPE_SRC);
         uint64_t srcTailNum = (_blockIdx < _bigCoreNum) ? _srcTailBigCore : _srcTailSmallCore;
-       _indicesLoadLen = min(availIndicesSize / BLOCK_SIZE * BLOCK_SIZE / sizeof(DTYPE_INDICES), srcTailNum);
-       _indicesLoadLen = (_indicesLoadLen == 0) ? 1 : _indicesLoadLen;
+        _indicesLoadLen = min(availIndicesSize / BLOCK_SIZE * BLOCK_SIZE / sizeof(DTYPE_INDICES), srcTailNum);
+        _indicesLoadLen = (_indicesLoadLen == 0) ? 1 : _indicesLoadLen;
 
         _loop = ceilDiv(srcTailNum, _indicesLoadLen);
         _indicesNumPerBatch = _indicesLoadLen;
@@ -676,7 +685,7 @@ private:
     {
         _srcLocal = _srcBuf.Get<DTYPE_SRC>();
         _indicesLocal = _indicesBuf.Get<DTYPE_INDICES>();
-        
+
         uint64_t indicesOffset = _indicesBaseOffset + i * _tailNumPerBatch;
         uint64_t srcOffset = indicesOffset * _tailLen;
         uint16_t loadTailNum = calcTailLoadNum(i);
@@ -684,7 +693,7 @@ private:
         pipe_barrier(PIPE_ALL);
         DataCopy(_indicesLocal, _indicesGm[indicesOffset], AlignUp(loadTailNum, _dataNumPerBlock));
         copyParamsIn = {loadTailNum, static_cast<uint32_t>(_tailLen * sizeof(DTYPE_SRC)), 0, 0, 0};
-        DataCopyPadExtParams<DTYPE_OUT> queryCopyInPadParams{false, 0, 0, 0};
+        DataCopyPadExtParams<DTYPE_OUT> queryCopyInPadParams {false, 0, 0, 0};
         DataCopyPad(_srcLocal, _srcGm[srcOffset], copyParamsIn, queryCopyInPadParams);
 
         SetAtomicAdd<DTYPE_SRC>();
@@ -694,12 +703,12 @@ private:
             uint64_t headID = idxGlobal / _srcDimSize;
             uint64_t srcLocalOffset = p * AlignUp(_tailLen, _dataNumPerBlock);
             uint64_t outOffset = (idxVal + headID * _dimSize) * _tailLen;
-            copyParamsOut = {1, static_cast<uint32_t>(_tailLen *sizeof(DTYPE_OUT)), 0, 0, 0};
+            copyParamsOut = {1, static_cast<uint32_t>(_tailLen * sizeof(DTYPE_OUT)), 0, 0, 0};
             DataCopyPad(_outGm[outOffset], _srcLocal[srcLocalOffset], copyParamsOut);
         }
         SetAtomicNone();
     }
-    
+
     __aicore__ inline void computeWithLargeTail(uint64_t i)
     {
         _srcLocal = _srcBuf.Get<DTYPE_SRC>();
@@ -714,7 +723,7 @@ private:
             DTYPE_INDICES idxVal = _indicesLocal.GetValue(p);
             uint64_t idxGlobal = indicesOffset + p;
             auto srcOffset = idxGlobal * _tailLen;
-            
+
             SetAtomicAdd<DTYPE_SRC>();
             computeLargeTailAdd(idxGlobal, idxVal, srcOffset);
             SetAtomicNone();
@@ -742,7 +751,8 @@ private:
             uint64_t offset = _tailElemLoop * _tailElemNum;
             uint64_t localOffset = getEventIdforDoublebuffer();
             WaitFlag<HardEvent::MTE3_MTE2>(_eventID);
-            DataCopy(_srcLocal[localOffset], _srcGm[srcOffset + offset], AlignUp(_tailElemNumLeftover, _dataNumPerBlock));
+            DataCopy(
+                _srcLocal[localOffset], _srcGm[srcOffset + offset], AlignUp(_tailElemNumLeftover, _dataNumPerBlock));
             SetFlag<HardEvent::MTE2_MTE3>(_eventID);
             WaitFlag<HardEvent::MTE2_MTE3>(_eventID);
             copyParamsOut = {1, static_cast<uint32_t>(_tailElemNumLeftover * sizeof(DTYPE_SRC)), 0, 0, 0};
@@ -778,7 +788,7 @@ private:
         if (_tailNumLeftover == 0) {
             return _tailNumPerBatch;
         }
-        return (i == _loop-1) ? _tailNumLeftover : _tailNumPerBatch;
+        return (i == _loop - 1) ? _tailNumLeftover : _tailNumPerBatch;
     }
 
     __aicore__ inline uint64_t calcIndicesLoadNum(uint64_t i)
@@ -786,7 +796,7 @@ private:
         if (_indicesNumLeftover == 0) {
             return _indicesNumPerBatch;
         }
-        return (i == _loop-1) ? _indicesNumLeftover : _indicesNumPerBatch;
+        return (i == _loop - 1) ? _indicesNumLeftover : _indicesNumPerBatch;
     }
 
 private:

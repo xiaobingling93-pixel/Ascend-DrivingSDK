@@ -1,9 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
  */
-#include "scatter_add_tiling_v3.h"
 #include "common/op_host/common.h"
 #include "register/op_def_registry.h"
+#include "scatter_add_tiling_v1.h"
 #include "tiling/platform/platform_ascendc.h"
 
 using namespace std;
@@ -17,19 +17,21 @@ constexpr uint64_t TAIL_LEN_THRESHOLD = 2048;
 constexpr uint64_t INDICES_IN_BATCH_NUM = 4096;
 constexpr uint64_t UB_SIZE_COEFF = 2;
 
+constexpr int INPUT_IDX_VAR = 2;
+
 constexpr uint64_t TILING_KEY_NO_TAIL_FULLY_LOAD = 0;
 constexpr uint64_t TILING_KEY_NO_TAIL_MULTI_HEADS = 1;
 constexpr uint64_t TILING_KEY_NO_TAIL_LARGE_HEAD = 2;
 constexpr uint64_t TILING_KEY_NO_TAIL_FEW_HEADS = 3;
-constexpr uint64_t TILINR_KEY_WITH_SMALL_TAIL = 4;
-constexpr uint64_t TILINR_KEY_WITH_LARGE_TAIL = 5;
-}
+constexpr uint64_t TILING_KEY_WITH_SMALL_TAIL = 4;
+constexpr uint64_t TILING_KEY_WITH_LARGE_TAIL = 5;
+} // namespace optiling
 
 
 namespace optiling {
-class ScatterAddTilingV3 {
+class ScatterAddTilingV1 {
 public:
-    ScatterAddTilingV3() : totalHead(1), tailLen(1) {};
+    ScatterAddTilingV1() : totalHead(1), tailLen(1) {};
     ge::graphStatus SetKernelTilingData(gert::TilingContext* context);
 
 private:
@@ -38,9 +40,8 @@ private:
     ge::graphStatus setNoTailInBatchTilingData(gert::TilingContext* context);   // tail length == 1
     ge::graphStatus setWithTailTilingData(gert::TilingContext* context);        // tail length > 1
 
-    
 private:
-    ScatterAddTilingDataV3 tilingData;
+    ScatterAddTilingDataV1 tilingData;
 
     uint64_t totalHead;
     uint64_t tailLen;
@@ -63,7 +64,7 @@ private:
     uint64_t dataNumPerBlock;
 };
 
-ge::graphStatus ScatterAddTilingV3::SetKernelTilingData(gert::TilingContext* context)
+ge::graphStatus ScatterAddTilingV1::SetKernelTilingData(gert::TilingContext* context)
 {
     if (context == nullptr) {
         return ge::GRAPH_FAILED;
@@ -91,7 +92,7 @@ ge::graphStatus ScatterAddTilingV3::SetKernelTilingData(gert::TilingContext* con
 
     tilingData.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
     context->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
-    size_t *currentWorkspace = context->GetWorkspaceSizes(1);
+    size_t* currentWorkspace = context->GetWorkspaceSizes(1);
     if (currentWorkspace == nullptr) {
         return ge::GRAPH_FAILED;
     }
@@ -100,7 +101,7 @@ ge::graphStatus ScatterAddTilingV3::SetKernelTilingData(gert::TilingContext* con
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ScatterAddTilingV3::setBaseTilingData(gert::TilingContext* context)
+ge::graphStatus ScatterAddTilingV1::setBaseTilingData(gert::TilingContext* context)
 {
     // step 1: calculate the available ub size
     auto platformInfo = context->GetPlatformInfo();
@@ -118,21 +119,20 @@ ge::graphStatus ScatterAddTilingV3::setBaseTilingData(gert::TilingContext* conte
     }
 
     // step 2: count the number of input elements
-    if (context->GetInputShape(0) == nullptr || 
-        context->GetInputShape(1) == nullptr || 
-        context->GetInputShape(2) == nullptr) {
+    if (context->GetInputShape(0) == nullptr || context->GetInputShape(1) == nullptr ||
+        context->GetInputShape(INPUT_IDX_VAR) == nullptr) {
         return ge::GRAPH_FAILED;
     }
 
     auto srcShape = context->GetInputShape(0)->GetStorageShape();
-    auto varShape = context->GetInputShape(2)->GetStorageShape();
+    auto varShape = context->GetInputShape(INPUT_IDX_VAR)->GetStorageShape();
     auto indiceShape = context->GetInputShape(1)->GetStorageShape();
 
     totalSrcNum = srcShape.GetShapeSize();
     totalOutNum = varShape.GetShapeSize();
     totalIndicesNum = indiceShape.GetShapeSize();
 
-    // step 3: calculate the number of heads and the length of tail 
+    // step 3: calculate the number of heads and the length of tail
     uint64_t srcDimNum = srcShape.GetDimNum();
     uint64_t indicesDimNum = indiceShape.GetDimNum();
 
@@ -147,7 +147,7 @@ ge::graphStatus ScatterAddTilingV3::setBaseTilingData(gert::TilingContext* conte
     for (uint64_t i = 0; i < dim; i++) {
         totalHead *= srcShape.GetDim(i);
     }
-    for(uint64_t i = dim+1; i < srcDimNum; i++) {
+    for (uint64_t i = dim + 1; i < srcDimNum; i++) {
         tailLen *= srcShape.GetDim(i);
     }
 
@@ -157,7 +157,7 @@ ge::graphStatus ScatterAddTilingV3::setBaseTilingData(gert::TilingContext* conte
     }
 
     srcDSize = kDataSizeMap[context->GetInputDesc(0)->GetDataType()];
-    outDSize = kDataSizeMap[context->GetInputDesc(2)->GetDataType()];
+    outDSize = kDataSizeMap[context->GetInputDesc(INPUT_IDX_VAR)->GetDataType()];
     indicesDSize = kDataSizeMap[context->GetInputDesc(1)->GetDataType()];
     totalOutSize = totalOutNum * outDSize;
 
@@ -183,7 +183,7 @@ ge::graphStatus ScatterAddTilingV3::setBaseTilingData(gert::TilingContext* conte
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ScatterAddTilingV3::setNoTailFullyLoadTilingData(gert::TilingContext* context)
+ge::graphStatus ScatterAddTilingV1::setNoTailFullyLoadTilingData(gert::TilingContext* context)
 {
     // ensuring each used core processes at least one indices element
     uint64_t blockDim = totalIndicesNum > coreNum ? coreNum : totalIndicesNum;
@@ -216,7 +216,7 @@ ge::graphStatus ScatterAddTilingV3::setNoTailFullyLoadTilingData(gert::TilingCon
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ScatterAddTilingV3::setNoTailInBatchTilingData(gert::TilingContext* context)
+ge::graphStatus ScatterAddTilingV1::setNoTailInBatchTilingData(gert::TilingContext* context)
 {
     uint64_t indicesNumPerBatch = min(INDICES_IN_BATCH_NUM, indicesNumPerHead);
     uint64_t remainUbSize = ubSize - indicesNumPerBatch * indicesDSize * 2;
@@ -243,7 +243,6 @@ ge::graphStatus ScatterAddTilingV3::setNoTailInBatchTilingData(gert::TilingConte
     uint64_t bigCoreNum = totalHead - coreNum * headNumSmallCore;
     uint64_t headNumPerTask = ubSize / BLOCK_SIZE * dataNumPerBlock / (2 * indicesNumPerHead + outNumPerHead);
     headNumPerTask = min(headNumBigCore, headNumPerTask);
-
     // case 2: at least one head can be fully loaded into ub
     if (headNumPerTask > 0) {
         context->SetBlockDim(coreNum);
@@ -263,22 +262,22 @@ ge::graphStatus ScatterAddTilingV3::setNoTailInBatchTilingData(gert::TilingConte
     tilingData.set_bigCoreNum(bigCoreNum);
     tilingData.set_indicesNumPerBatch(indicesNumPerBatch);
     tilingData.set_maxOutNumPerBatch(maxOutNumPerBatch);
-    
+
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ScatterAddTilingV3::setWithTailTilingData(gert::TilingContext* context)
+ge::graphStatus ScatterAddTilingV1::setWithTailTilingData(gert::TilingContext* context)
 {
-    uint64_t totalSrcTail = totalHead * srcDimSize; 
+    uint64_t totalSrcTail = totalHead * srcDimSize;
     uint64_t srcTailBigCore = DivCeil(totalSrcTail, coreNum);
     uint64_t srcTailSmallCore = srcTailBigCore - 1;
     uint64_t usedCoreNum = DivCeil(totalSrcTail, srcTailBigCore);
     uint64_t bigCoreNum = totalSrcTail - srcTailSmallCore * usedCoreNum;
 
     if (tailLen <= TAIL_LEN_THRESHOLD) {
-        tilingKey = TILINR_KEY_WITH_SMALL_TAIL;
+        tilingKey = TILING_KEY_WITH_SMALL_TAIL;
     } else {
-        tilingKey = TILINR_KEY_WITH_LARGE_TAIL;
+        tilingKey = TILING_KEY_WITH_LARGE_TAIL;
     }
 
     context->SetBlockDim(usedCoreNum);
@@ -291,19 +290,19 @@ ge::graphStatus ScatterAddTilingV3::setWithTailTilingData(gert::TilingContext* c
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ScatterAddTilingFuncV3(gert::TilingContext* context)
+ge::graphStatus ScatterAddTilingFuncV1(gert::TilingContext* context)
 {
     if (context == nullptr) {
         return ge::GRAPH_FAILED;
     }
-    ScatterAddTilingV3 tilingData;
+    ScatterAddTilingV1 tilingData;
     return tilingData.SetKernelTilingData(context);
 }
-}
+} // namespace optiling
 
 
 namespace ge {
-static ge::graphStatus ScatterAddInferShapeV3(gert::InferShapeContext* context)
+static ge::graphStatus ScatterAddInferShapeV1(gert::InferShapeContext* context)
 {
     if (context == nullptr) {
         return ge::GRAPH_FAILED;
@@ -317,7 +316,7 @@ static ge::graphStatus ScatterAddInferShapeV3(gert::InferShapeContext* context)
     return GRAPH_SUCCESS;
 }
 
-static ge::graphStatus ScatterAddInferDataTypeV3(gert::InferDataTypeContext *context)
+static ge::graphStatus ScatterAddInferDataTypeV1(gert::InferDataTypeContext* context)
 {
     if (context == nullptr) {
         return ge::GRAPH_FAILED;
@@ -326,13 +325,13 @@ static ge::graphStatus ScatterAddInferDataTypeV3(gert::InferDataTypeContext *con
     context->SetOutputDataType(0, src_dtype);
     return GRAPH_SUCCESS;
 }
-}
+} // namespace ge
 
 
 namespace ops {
-class ScatterAddV3 : public OpDef {
+class ScatterAddV1 : public OpDef {
 public:
-    explicit ScatterAddV3(const char* name) : OpDef(name)
+    explicit ScatterAddV1(const char* name) : OpDef(name)
     {
         this->Input("src")
             .ParamType(REQUIRED)
@@ -362,14 +361,13 @@ public:
 
         this->Attr("dim").Int();
 
-        this->SetInferShape(ge::ScatterAddInferShapeV3)
-            .SetInferDataType(ge::ScatterAddInferDataTypeV3);
+        this->SetInferShape(ge::ScatterAddInferShapeV1).SetInferDataType(ge::ScatterAddInferDataTypeV1);
 
-        this->AICore().SetTiling(optiling::ScatterAddTilingFuncV3);
+        this->AICore().SetTiling(optiling::ScatterAddTilingFuncV1);
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
     }
 };
 
-OP_ADD(ScatterAddV3);
-}
+OP_ADD(ScatterAddV1);
+} // namespace ops

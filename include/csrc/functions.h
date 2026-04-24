@@ -261,8 +261,6 @@ std::tuple<at::Tensor, at::Tensor> cartesian_to_frenet1(const at::Tensor& dist_v
 std::tuple<at::Tensor, at::Tensor, at::Tensor> calc_poly_start_end_sl(
     const at::Tensor& min_idx, const at::Tensor& poly_line, const at::Tensor& points, const at::Tensor& s_cum);
 
-at::Tensor min_area_polygons(const at::Tensor& pointsets);
-
 std::tuple<at::Tensor, at::Tensor> radius(
     at::Tensor& x, at::Tensor& y, at::Tensor& ptr_x, at::Tensor& ptr_y, double r, int max_num_neighbors);
 

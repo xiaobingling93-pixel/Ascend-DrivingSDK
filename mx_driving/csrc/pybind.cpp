@@ -222,9 +222,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     // calc_poly_start_end_sl
     m.def("calc_poly_start_end_sl", &calc_poly_start_end_sl);
 
-    // min_area_polygons
-    m.def("min_area_polygons", &min_area_polygons);
-
     // radius
     m.def("radius", &radius);
 

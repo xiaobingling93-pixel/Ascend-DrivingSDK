@@ -1,13 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
  */
- #ifndef SCATTER_ADD_TILING_V3_H 
- #define SCATTER_ADD_TILING_V3_H
+#ifndef SCATTER_ADD_TILING_V1_H
+#define SCATTER_ADD_TILING_V1_H
 
 #include "register/tilingdata_base.h"
 
 namespace optiling {
-BEGIN_TILING_DATA_DEF(ScatterAddTilingDataV3)
+BEGIN_TILING_DATA_DEF(ScatterAddTilingDataV1)
     // base tiling data
     TILING_DATA_FIELD_DEF(uint64_t, totalHead);
     TILING_DATA_FIELD_DEF(uint64_t, tailLen);
@@ -42,7 +42,7 @@ BEGIN_TILING_DATA_DEF(ScatterAddTilingDataV3)
     
 END_TILING_DATA_DEF;
 
-REGISTER_TILING_DATA_CLASS(ScatterAddV3, ScatterAddTilingDataV3)
+REGISTER_TILING_DATA_CLASS(ScatterAddV1, ScatterAddTilingDataV1)
 }
 
 #endif

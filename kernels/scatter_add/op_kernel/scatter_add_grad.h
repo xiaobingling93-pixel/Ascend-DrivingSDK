@@ -1,8 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
-#ifndef _SCATTER_ADD_GRAD_H_
-#define _SCATTER_ADD_GRAD_H_
+#ifndef SCATTER_ADD_GRAD_H_
+#define SCATTER_ADD_GRAD_H_
 
 #include "kernel_operator.h"
 #include "kernel_tiling/kernel_tiling.h"
@@ -11,9 +11,9 @@ namespace ScatterAddGradNS {
 using namespace AscendC;
 
 template <typename T>
-class ScatterAddGradV2 : public ScatterAddGradBase<T> {
+class ScatterAddGradV1 : public ScatterAddGradBase<T> {
 public:
-    __aicore__ inline ScatterAddGradV2() {}
+    __aicore__ inline ScatterAddGradV1() {}
     __aicore__ inline void Init(GM_ADDR gradOut, GM_ADDR index, GM_ADDR gradIn, const ScatterAddGradTilingData* tilingData)
     {
         this->InitTiling(tilingData);

@@ -64,7 +64,6 @@ __all__ = [
     "diff_iou_rotated_2d",
     "nms3d_on_sight",
     "cartesian_to_frenet",
-    "min_area_polygons",
     "radius",
     "npu_unique",
     "graph_softmax",
@@ -139,7 +138,6 @@ from .ops.nms3d_on_sight import nms3d_on_sight
 from .ops.cartesian_to_frenet import cartesian_to_frenet
 from .patcher import default_patcher_builder, patch_mmcv_version
 from .ops.radius import radius
-from .ops.min_area_polygons import min_area_polygons
 from .ops.npu_unique import npu_unique
 from .ops.graph_softmax import graph_softmax
 from .ops.cylinder_query import cylinder_query
