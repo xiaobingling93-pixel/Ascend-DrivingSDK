@@ -24,7 +24,7 @@ public:
     }
 
     __aicore__ inline void Process();
-    __aicore__ inline void ProcessSingleWithoutDepth();
+    __aicore__ inline void ProcessWithoutDepth();
 
 private:
     __aicore__ inline void InitTask(const BEVPoolV3TilingData& tiling)
@@ -116,9 +116,9 @@ private:
     int32_t blkIdx_;
     GlobalTensor<float> depthGm_, featGm_, outGm_;
     GlobalTensor<int32_t> ranksDepthGm_, ranksFeatGm_, ranksBevGm_;
-    TQue<TPosition::VECIN, 1> ranksQue_;
-    TQue<TPosition::VECIN, 2> inQue_;
-    TQue<TPosition::VECOUT, 2> outQue_;
+    TQue<TPosition::VECIN, DOUBLE_BUFFER> ranksQue_;
+    TQue<TPosition::VECIN, DOUBLE_BUFFER> inQue_;
+    TQue<TPosition::VECOUT, DOUBLE_BUFFER> outQue_;
 
     TBuf<TPosition::VECCALC> ranksBuf_, featBuf_, depthBuf_, depthGatherTmpBuf_, depthCopyTmpBuf_, patternBuf_, outBuf_;
 
@@ -316,7 +316,7 @@ __aicore__ inline void BEVPoolV3Kernel<with_depth>::ProcessSingleWithoutDepth(ui
 }
 
 template<bool with_depth>
-__aicore__ inline void BEVPoolV3Kernel<with_depth>::ProcessSingleWithoutDepth()
+__aicore__ inline void BEVPoolV3Kernel<with_depth>::ProcessWithoutDepth()
 {
     for (uint32_t i = taskStartIdx_; i < taskEndIdx_; ++i) {
         uint32_t actualRankNum = avgRankNum_;
@@ -334,7 +334,7 @@ extern "C" __global__ __aicore__ void bev_pool_v3(GM_ADDR depth, GM_ADDR feat, G
     TPipe pipe;
     if (TILING_KEY_IS(0)) {
         BEVPoolV3Kernel<false> kernel(&pipe, depth, feat, ranksDepth, ranksFeat, ranksBev, out, bevPoolTiling);
-        kernel.ProcessSingleWithoutDepth();
+        kernel.ProcessWithoutDepth();
     } else if (TILING_KEY_IS(1)) {
         BEVPoolV3Kernel<true> kernel(&pipe, depth, feat, ranksDepth, ranksFeat, ranksBev, out, bevPoolTiling);
         kernel.Process();
