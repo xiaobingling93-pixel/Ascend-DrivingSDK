@@ -2,10 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-#include "calc_poly_start_end_sl_tiling.h"
 #include "register/op_def_registry.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "csrc/utils.h"
+#include "calc_poly_start_end_sl/op_host/calc_poly_start_end_sl_tiling.h"
 
 namespace {
     constexpr float AVAILABLE_UB_RATIO = 0.5;
@@ -171,8 +171,7 @@ public:
         this->SetInferShape(ge::InferShapeForCalcPolyStartEndSl)
             .SetInferDataType(ge::InferDataTypeForCalcPolyStartEndSl);
         this->AICore().SetTiling(optiling::TilingForCalcPolyStartEndSl);
-        this->AICore().AddConfig("ascend910b");
-        this->AICore().AddConfig("ascend910_93");
+        this->AICore().AddConfig("ascend950");
     }
 };
 

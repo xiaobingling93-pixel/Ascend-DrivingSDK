@@ -76,14 +76,14 @@ private:
         this->taskResultSizeAligned = coreId < bigCoreCount ? tiling->taskResultSizeAligned_b : tiling->taskResultSizeAligned_s;
         this->axisSizeAligned = coreId < bigCoreCount ? tiling->axisSizeAligned_b : tiling->axisSizeAligned_s;
         this->numTaskCurCore = coreId < bigCoreCount ? tiling->numTaskCurCore_b : tiling->avgTaskNum;
-        this->TaskLengthCurCore = coreId < bigCoreCount ? tiling->TaskLengthCurCore_b : tiling->TaskLengthCurCore_s;
+        this->taskLengthCurCore = coreId < bigCoreCount ? tiling->taskLengthCurCore_b : tiling->taskLengthCurCore_s;
         this->tileTaskNum = coreId < bigCoreCount ? tiling->tileTaskNum_b : tiling->tileTaskNum_s;
 
         this->formerTileTaskNum = this->tileTaskNum;
         this->tileLength = tileTaskNum * taskSizeAligned;
 
         if (coreId < bigCoreCount) {
-            startTaskId = TaskLengthCurCore * coreId;
+            startTaskId = taskLengthCurCore * coreId;
             startResId = numTaskCurCore * coreId;
         } else {
             startTaskId = (avgTaskNum + 1) * taskSizeElem * bigCoreCount + numTaskCurCore * taskSizeElem * (coreId - bigCoreCount);
@@ -100,7 +100,7 @@ private:
     __aicore__ inline void InitGM(const GM_ADDR distVec, const GM_ADDR minIdx, const GM_ADDR backIdx)
     {
         this->distVecGm.SetGlobalBuffer((__gm__ float*) distVec + startTaskId,
-            TaskLengthCurCore);
+            taskLengthCurCore);
         this->minIdxGm.SetGlobalBuffer((__gm__ int32_t*) minIdx + startResId,
             numTaskCurCore);
         this->backIdxGm.SetGlobalBuffer((__gm__ int32_t*) backIdx + startResId,
@@ -184,7 +184,7 @@ private:
     uint32_t startTaskId, startResId;
     uint32_t copyInAlignNum, dstStride, rightPadding, numPolyLinePoints, pointDim, taskSize, taskSizeElem, taskSizeAligned, bigCoreCount,
     usedCoreNum, avgTaskNum, coreId, tileNum, tileRemainder, taskResultSizeAligned, axisSizeAligned,
-    numTaskCurCore, TaskLengthCurCore, tileTaskNum, formerTileTaskNum, tileLength;
+    numTaskCurCore, taskLengthCurCore, tileTaskNum, formerTileTaskNum, tileLength;
     TBuf<TPosition::VECCALC> xBuffer, yBuffer, minRecBuffer, outQueueMinIdx, outQueueBackIdx, minTempBuffer, workerBuffer, minTempVal, inQueueDistVec;
 };
 extern "C" __global__ __aicore__ void cartesian_to_frenet1(GM_ADDR distVec, GM_ADDR minIdx,

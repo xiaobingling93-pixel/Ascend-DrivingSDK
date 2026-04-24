@@ -87,7 +87,7 @@ public:
             Cast(minIdxLocalToFloat, minIdxLocal, AscendC::RoundMode::CAST_NONE, compBatchIdxRound64Size);
             CompareScalar(minIdxCompareWithZero, minIdxLocalToFloat, static_cast<float>(0), AscendC::CMPMODE::GT, compBatchIdxRound64Size);
             CompareScalar(dotValueCompareWithZero, dotValue, static_cast<float>(0), AscendC::CMPMODE::GT, compBatchIdxRound64Size);
-            And(andResult, dotValueCompareWithZero.ReinterpretCast<uint16_t>(), minIdxCompareWithZero.ReinterpretCast<uint16_t>(), compBatchIdxRound64Size);
+            And(andResult, dotValueCompareWithZero, minIdxCompareWithZero, compBatchIdxRound64Size);
             CompareScalar(eqResult, minIdxLocal, static_cast<int32_t>(numPoint - 1), AscendC::CMPMODE::EQ, compBatchIdxRound64Size);
             Or(orResult, andResult, eqResult, compBatchIdxRound64Size);
 
@@ -125,9 +125,9 @@ private:
         pipe.InitBuffer(dotValueCompareWithZeroBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint8_t));
         pipe.InitBuffer(minIdxCompareWithZeroBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint8_t));
 
-        pipe.InitBuffer(andResultBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint16_t));
-        pipe.InitBuffer(eqResultBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint16_t));
-        pipe.InitBuffer(orResultBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint16_t));
+        pipe.InitBuffer(andResultBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint8_t));
+        pipe.InitBuffer(eqResultBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint8_t));
+        pipe.InitBuffer(orResultBuf, ubLengthBatchIdxSizeRound64 * sizeof(uint8_t));
 
         pipe.InitBuffer(minIdxSubOneBuf, ubLengthBatchIdxSizeRound64 * sizeof(int32_t));
         pipe.InitBuffer(outMinIdxBuf, ubLengthBatchIdxSizeRound64 * sizeof(int32_t));
@@ -152,9 +152,9 @@ private:
         dotValueCompareWithZero = dotValueCompareWithZeroBuf.Get<uint8_t>();
         minIdxCompareWithZero = minIdxCompareWithZeroBuf.Get<uint8_t>();
 
-        andResult = andResultBuf.Get<uint16_t>();
-        eqResult = eqResultBuf.Get<uint16_t>();
-        orResult = orResultBuf.Get<uint16_t>();
+        andResult = andResultBuf.Get<uint8_t>();
+        eqResult = eqResultBuf.Get<uint8_t>();
+        orResult = orResultBuf.Get<uint8_t>();
 
         minIdxSubOne = minIdxSubOneBuf.Get<int32_t>();
         outMinIdxLocal = outMinIdxBuf.Get<int32_t>();
@@ -187,7 +187,7 @@ private:
     LocalTensor<float> frontPoint, backPoint, ptGather, dotValue;
     LocalTensor<float> minIdxLocalToFloat;
     LocalTensor<uint8_t> dotValueCompareWithZero, minIdxCompareWithZero;
-    LocalTensor<uint16_t> andResult, eqResult, orResult;
+    LocalTensor<uint8_t> andResult, eqResult, orResult;
     LocalTensor<int32_t> minIdxSubOne;
     LocalTensor<int32_t> selectIdx, batchIdxOffset;
 

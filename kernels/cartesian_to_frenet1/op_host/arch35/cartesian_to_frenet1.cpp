@@ -1,6 +1,6 @@
-#include "cartesian_to_frenet1.h"
 #include "register/op_def_registry.h"
 #include "tiling/platform/platform_ascendc.h"
+#include "cartesian_to_frenet1/op_host/cartesian_to_frenet1.h"
 
 namespace {
     constexpr float AVAILABLE_UB_RATIO = 0.3;
@@ -193,8 +193,7 @@ public:
 
         this->SetInferShape(ge::InferShapeForCartesianToFrenet1).SetInferDataType(ge::InferDataTypeForCartesianToFrenet1);
         this->AICore().SetTiling(optiling::TilingForCartesianToFrenet1);
-        this->AICore().AddConfig("ascend910b");
-        this->AICore().AddConfig("ascend910_93");
+        this->AICore().AddConfig("ascend950");
     }
 };
 

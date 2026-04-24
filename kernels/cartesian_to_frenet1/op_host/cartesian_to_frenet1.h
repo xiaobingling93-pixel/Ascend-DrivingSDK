@@ -27,8 +27,8 @@ BEGIN_TILING_DATA_DEF(CartesianToFrenet1TilingData)
     TILING_DATA_FIELD_DEF(uint32_t, avgTaskNum);
 
     TILING_DATA_FIELD_DEF(uint32_t, numTaskCurCore_b);
-    TILING_DATA_FIELD_DEF(uint32_t, TaskLengthCurCore_b);
-    TILING_DATA_FIELD_DEF(uint32_t, TaskLengthCurCore_s);
+    TILING_DATA_FIELD_DEF(uint32_t, taskLengthCurCore_b);
+    TILING_DATA_FIELD_DEF(uint32_t, taskLengthCurCore_s);
 
     TILING_DATA_FIELD_DEF(uint32_t, tileTaskNum_b);
     TILING_DATA_FIELD_DEF(uint32_t, tileTaskNum_s);
